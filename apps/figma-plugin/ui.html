@@ -835,6 +835,7 @@ card-gap (no clear layer or hierarchy)</div>
           model: MODEL,
           collectionStructure: structure,
           auditGroupId: generateId(),
+          systemPrompt: customPrompts["fix"] || undefined,
         }),
       });
 
@@ -926,6 +927,7 @@ card-gap (no clear layer or hierarchy)</div>
           variableData: variableData,
           auditGroupId: generateId(),
           variablesCount: totalVars,
+          systemPrompt: customPrompts["generic"] || undefined,
         }),
       });
 
@@ -1061,6 +1063,7 @@ card-gap (no clear layer or hierarchy)</div>
           unreferencedNames: agent.unreferencedNames,
           auditGroupId: auditGroupId,
           variablesCount: agent.collection.variables.length,
+          systemPrompt: customPrompts[agent.name] || undefined,
         }),
       });
 
@@ -1151,7 +1154,7 @@ card-gap (no clear layer or hierarchy)</div>
       var resp = await fetch(WORKER_URL + "/audit/component-health", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiToken },
-        body: JSON.stringify({ model: MODEL, componentData: componentData, auditGroupId: auditGroupId, componentCount: componentData.length }),
+        body: JSON.stringify({ model: MODEL, componentData: componentData, auditGroupId: auditGroupId, componentCount: componentData.length, systemPrompt: customPrompts["component-health"] || undefined }),
       });
       if (!resp.ok) {
         if (resp.status === 401) { apiToken = null; parent.postMessage({ pluginMessage: { type: "clear-token" } }, "*"); throw { reason: "Authentication failed", detail: "Session expired. Restart plugin." }; }
