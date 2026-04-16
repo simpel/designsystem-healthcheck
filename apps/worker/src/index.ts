@@ -30,6 +30,12 @@ const CORS_HEADERS: Record<string, string> = {
     "Content-Type, Authorization, X-Audit-Group-Id, X-Plugin-Secret",
 };
 
+function sanitizeCustomPrompt(prompt: string | undefined): string | null {
+  if (!prompt || !prompt.trim()) return null;
+  if (prompt.length > 20000) return null;
+  return "You are a Figma design system auditor. " + prompt.trim();
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -137,7 +143,7 @@ async function handleCollectionAudit(
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : systemPrompt,
+    systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? systemPrompt,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -190,7 +196,7 @@ async function handleComponentHealth(
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : COMPONENT_HEALTH_SYSTEM_PROMPT,
+    systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? COMPONENT_HEALTH_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -238,7 +244,7 @@ async function handleFix(request: Request, env: Env, ctx: ExecutionContext): Pro
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 4096,
-    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : FIX_SYSTEM_PROMPT,
+    systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? FIX_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: FIX_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -266,7 +272,7 @@ async function handleGeneric(request: Request, env: Env, ctx: ExecutionContext):
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : GENERIC_SYSTEM_PROMPT,
+    systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? GENERIC_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
