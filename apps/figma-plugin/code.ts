@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 480, height: 600 });
+figma.showUI(__html__, { width: 560, height: 600 });
 
 interface SerializedVariableValue {
   aliasId: string | null;
@@ -37,7 +37,6 @@ interface SerializedComponent {
   key: string;
   description: string;
   publishStatus: string;
-  hasDevResources: boolean;
   isComponentSet: boolean;
   variantCount: number;
   variantProperties: Record<string, SerializedComponentVariant>;
@@ -58,6 +57,13 @@ interface BrokenReference {
   source: "variable" | "style";
   styleType?: string;
   property?: string;
+}
+
+interface UnboundStyleProperty {
+  styleName: string;
+  styleType: "PAINT" | "TEXT" | "EFFECT" | "GRID";
+  property: string;
+  currentValue: string;
 }
 
 function stringifyValue(value: unknown, type: VariableResolvedDataType): string | null {
@@ -204,6 +210,154 @@ async function scanStyleBoundVariables(
   }
 }
 
+async function isBindingValid(
+  binding: unknown,
+): Promise<boolean> {
+  if (!binding) return false;
+
+  // TextStyle boundVariables are arrays: [{ type: "VARIABLE_ALIAS", variableId: "..." }]
+  // Paint/Effect boundVariables are objects: { type: "VARIABLE_ALIAS", id: "..." }
+  let varId: string | null = null;
+
+  if (Array.isArray(binding)) {
+    const first = binding[0];
+    if (!first) return false;
+    varId = first.variableId || first.id || null;
+  } else if (typeof binding === "object") {
+    const obj = binding as any;
+    if (obj.type !== "VARIABLE_ALIAS") return false;
+    varId = obj.variableId || obj.id || null;
+  }
+
+  if (!varId) return false;
+  const resolved = await figma.variables.getVariableByIdAsync(varId);
+  return resolved !== null;
+}
+
+async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
+  const unbound: UnboundStyleProperty[] = [];
+
+  // Paint styles — check each paint for color binding
+  const paintStyles = await figma.getLocalPaintStylesAsync();
+  for (const style of paintStyles) {
+    for (let i = 0; i < style.paints.length; i++) {
+      const paint = style.paints[i];
+      const bound = (paint as any).boundVariables || {};
+      if (paint.type === "SOLID") {
+        const valid = await isBindingValid(bound.color);
+        if (!valid) {
+          const c = (paint as SolidPaint).color;
+          const r = Math.round(c.r * 255);
+          const g = Math.round(c.g * 255);
+          const b = Math.round(c.b * 255);
+          unbound.push({
+            styleName: style.name,
+            styleType: "PAINT",
+            property: style.paints.length > 1 ? "color (paint " + i + ")" : "color",
+            currentValue: "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0"),
+          });
+        }
+      }
+    }
+  }
+
+  // Text styles — check all bindable properties
+  const textStyles = await figma.getLocalTextStylesAsync();
+  const textProps: Array<{ key: string; label: string; format: (style: TextStyle) => string }> = [
+    { key: "fontSize", label: "fontSize", format: function(s) { return s.fontSize + "px"; } },
+    {
+      key: "lineHeight",
+      label: "lineHeight",
+      format: function(s) {
+        var lh = s.lineHeight as any;
+        if (lh.unit === "AUTO") return "AUTO";
+        return lh.unit === "PERCENT" ? lh.value + "%" : lh.value + "px";
+      },
+    },
+    {
+      key: "letterSpacing",
+      label: "letterSpacing",
+      format: function(s) {
+        var ls = s.letterSpacing as any;
+        return ls.unit === "PERCENT" ? ls.value + "%" : ls.value + "px";
+      },
+    },
+    {
+      key: "paragraphSpacing",
+      label: "paragraphSpacing",
+      format: function(s) { return s.paragraphSpacing + "px"; },
+    },
+    {
+      key: "fontFamily",
+      label: "fontFamily",
+      format: function(s) { return s.fontName.family; },
+    },
+    {
+      key: "fontStyle",
+      label: "fontStyle",
+      format: function(s) { return s.fontName.style; },
+    },
+  ];
+
+  for (const style of textStyles) {
+    const bound = (style as any).boundVariables || {};
+    for (const prop of textProps) {
+      const valid = await isBindingValid(bound[prop.key]);
+      if (!valid) {
+        unbound.push({
+          styleName: style.name,
+          styleType: "TEXT",
+          property: prop.label,
+          currentValue: prop.format(style),
+        });
+      }
+    }
+  }
+
+  // Effect styles — check color, spread, radius on each effect
+  const effectStyles = await figma.getLocalEffectStylesAsync();
+  for (const style of effectStyles) {
+    for (let i = 0; i < style.effects.length; i++) {
+      const effect = style.effects[i];
+      const bound = (effect as any).boundVariables || {};
+      const prefix = style.effects.length > 1 ? "effect[" + i + "]." : "";
+
+      if ("color" in effect && !(await isBindingValid(bound.color))) {
+        const c = (effect as any).color;
+        if (c) {
+          const r = Math.round((c.r || 0) * 255);
+          const g = Math.round((c.g || 0) * 255);
+          const b = Math.round((c.b || 0) * 255);
+          unbound.push({
+            styleName: style.name,
+            styleType: "EFFECT",
+            property: prefix + "color",
+            currentValue: "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0"),
+          });
+        }
+      }
+      if ("radius" in effect && (effect as any).radius !== 0 && !(await isBindingValid(bound.radius))) {
+        unbound.push({
+          styleName: style.name,
+          styleType: "EFFECT",
+          property: prefix + "radius",
+          currentValue: (effect as any).radius + "px",
+        });
+      }
+      if ("spread" in effect && (effect as any).spread !== 0 && !(await isBindingValid(bound.spread))) {
+        unbound.push({
+          styleName: style.name,
+          styleType: "EFFECT",
+          property: prefix + "spread",
+          currentValue: (effect as any).spread + "px",
+        });
+      }
+    }
+  }
+
+  return unbound;
+}
+
 // ─── Component health scanning ──────────────────────────────────────
 
 function countBoundVariables(
@@ -338,6 +492,7 @@ async function loadComponentData(): Promise<SerializedComponent[]> {
   const pages = figma.root.children;
 
   for (const page of pages) {
+    await page.loadAsync();
     const components = page.findAllWithCriteria({
       types: ["COMPONENT_SET", "COMPONENT"],
     });
@@ -395,22 +550,12 @@ async function loadComponentData(): Promise<SerializedComponent[]> {
         // API may not be available in all contexts
       }
 
-      // Dev resources (Code Connect, Storybook links, etc.)
-      let hasDevResources = false;
-      try {
-        const devResources = await (compNode as any).getDevResourcesAsync();
-        hasDevResources = devResources && devResources.length > 0;
-      } catch (_) {
-        // API may not be available
-      }
-
       result.push({
         id: compNode.id,
         name: compNode.name,
         key: (compNode as any).key || "",
         description: compNode.description || "",
         publishStatus,
-        hasDevResources,
         isComponentSet: isSet,
         variantCount,
         variantProperties,
@@ -629,6 +774,7 @@ figma.ui.onmessage = async (msg: {
 
   if (msg.type === "reload-variables") {
     await loadVariableData();
+    await loadStyleData();
     await loadAndSendComponentData();
   }
 
@@ -649,6 +795,7 @@ figma.ui.onmessage = async (msg: {
     figma.ui.postMessage({ type: "auth-ready", token: msg.token });
   }
 
+
   if (msg.type === "registration-failed") {
     figma.notify("Registration failed: " + (msg.message || "Unknown error"), { error: true, timeout: 2500 });
   }
@@ -657,6 +804,14 @@ figma.ui.onmessage = async (msg: {
     figma.notify(msg.message, { error: !!msg.error, timeout: 2500 });
   }
 };
+
+async function loadStyleData(): Promise<void> {
+  const unboundStyles = await scanUnboundStyleProperties();
+  figma.ui.postMessage({
+    type: "style-data",
+    data: unboundStyles,
+  });
+}
 
 async function loadAndSendComponentData(): Promise<void> {
   const components = await loadComponentData();
@@ -679,7 +834,8 @@ async function initPlugin(): Promise<void> {
     }
   }
 
-  // Load variable and component data
+  // Load variable, style, and component data
   await loadVariableData();
+  await loadStyleData();
   await loadAndSendComponentData();
 }

@@ -42,7 +42,7 @@ Every violation must have:
 - level: "error", "warning", or "note"
 - rule: short label
 - explanation: one specific sentence explaining exactly what is wrong and why
-- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "color/blue/500" — empty string for non-rename fixes) and "description" (short human-readable reason, e.g. "Matches the existing blue scale"). Multiple options when more than one valid name exists (e.g. "color/blue/500" vs "color/navy/500").`;
+- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "color/blue/500" — empty string for non-rename fixes), "description" (short human-readable reason, e.g. "Matches the existing blue scale"), and optionally "action": set to "delete-variable" when the fix is to delete the variable. Multiple options when more than one valid name exists (e.g. "color/blue/500" vs "color/navy/500").`;
 
 // ─── Themes prompt ──────────────────────────────────────────────────
 export const THEMES_SYSTEM_PROMPT = `You are a Figma variable auditor for the THEMES collection.
@@ -73,7 +73,7 @@ Every violation must have:
 - level: "error", "warning", or "note"
 - rule: short label
 - explanation: one specific sentence explaining exactly what is wrong and why
-- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "surface/background/default" — empty string for non-rename fixes) and "description" (short human-readable reason, e.g. "Follows the semantic surface pattern"). Multiple options when more than one valid name exists.`;
+- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "surface/background/default" — empty string for non-rename fixes), "description" (short human-readable reason, e.g. "Follows the semantic surface pattern"), and optionally "action": set to "delete-variable" when the fix is to delete the variable. Multiple options when more than one valid name exists.`;
 
 // ─── Components prompt ──────────────────────────────────────────────
 export const COMPONENTS_SYSTEM_PROMPT = `You are a Figma variable auditor for the COMPONENTS collection.
@@ -110,7 +110,6 @@ export const COMPONENT_HEALTH_SYSTEM_PROMPT = `You are a Figma component health 
 For each component you receive:
 - name, description, key
 - publishStatus: "UNPUBLISHED", "CHANGED", or "CURRENT"
-- hasDevResources: whether the component has Code Connect or other dev resources linked
 - isComponentSet: whether it is a multi-variant component set
 - variantProperties: the variant dimensions and their options (e.g. State: [Default, Hover, Pressed, Disabled])
 - tokenCoverage: { total, bound, raw } — how many inspectable properties exist, how many use variable/token bindings, how many use raw hardcoded values
@@ -136,9 +135,6 @@ Rules:
 **Publication status** (warning if not published):
 - publishStatus "UNPUBLISHED": warning — component is not published to the library
 - publishStatus "CHANGED": note — component has unpublished changes
-
-**Developer handoff** (note if missing):
-- hasDevResources false: note — "No Code Connect" — no dev resources linked to this component
 
 **Description** (note if empty):
 - Empty description: note — components should have a description for discoverability
@@ -218,7 +214,7 @@ Every violation must have:
 - level: "error", "warning", or "note"
 - rule: short label
 - explanation: one specific sentence explaining exactly what is wrong and why
-- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "color/blue/500" — empty string for non-rename fixes) and "description" (short human-readable reason, e.g. "Matches the numeric scale pattern"). Multiple options when more than one valid name exists.`;
+- options: array of 1–3 fix options, best first. Each option has "name" (the exact corrected variable name, e.g. "color/blue/500" — empty string for non-rename fixes), "description" (short human-readable reason, e.g. "Matches the numeric scale pattern"), and optionally "action": set to "delete-variable" when the fix is to delete the variable. Multiple options when more than one valid name exists.`;
 
 // ─── Fix prompt ─────────────────────────────────────────────────────
 export const FIX_SYSTEM_PROMPT = `You are a Figma variable architecture advisor. The user's file has architecture violations — the expected structure is exactly three collections: "primitives", "themes", "components" (all lowercase).
@@ -278,6 +274,7 @@ export const VIOLATIONS_SCHEMA = {
                 properties: {
                   name: { type: "string" },
                   description: { type: "string" },
+                  action: { type: "string", enum: ["delete-variable"] },
                 },
               },
             },

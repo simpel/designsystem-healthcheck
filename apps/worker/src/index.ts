@@ -19,6 +19,7 @@ interface Env {
   CF_AIG_TOKEN: string;
   CF_ACCOUNT_ID: string;
   CF_GATEWAY_ID: string;
+  PLUGIN_SECRET: string;
   DB: D1Database;
 }
 
@@ -55,6 +56,11 @@ async function authenticate(request: Request, env: Env): Promise<{ userId: numbe
 }
 
 async function handleRegister(request: Request, env: Env): Promise<Response> {
+  const pluginSecret = request.headers.get("X-Plugin-Secret");
+  if (!pluginSecret || pluginSecret !== env.PLUGIN_SECRET) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
   let body: { figmaUserId?: string; figmaUserName?: string };
   try {
     body = await request.json();

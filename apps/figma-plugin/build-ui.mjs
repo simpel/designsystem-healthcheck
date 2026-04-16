@@ -21,9 +21,11 @@ if (!MODEL) {
   process.exit(1);
 }
 
-// Read template, replace placeholders, write output
+// Read template + CSS, inline CSS, replace placeholders, write output
+const css = readFileSync(resolve(__dirname, "ui.css"), "utf-8");
 const template = readFileSync(resolve(__dirname, "ui.html"), "utf-8");
 const output = template
+  .replace("/* __CSS__ */", css)
   .replace(
     /const WORKER_URL\s*=\s*"[^"]*"/,
     `const WORKER_URL = "${WORKER_URL}"`

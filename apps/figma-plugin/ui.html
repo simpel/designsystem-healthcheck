@@ -1,464 +1,18 @@
-<style>
-  :root {
-    --text-primary: #1A1A1A;
-    --text-secondary: #767676;
-    --error: #CC0000;
-    --warning: #B8860B;
-    --note: #0066CC;
-    --success: #1A7A1A;
-    --broken: #9333EA;
-    --running: #B8860B;
-    --border: rgba(0,0,0,0.12);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --text-primary: #E8E8E8;
-      --text-secondary: #767676;
-      --warning: #D4A843;
-      --note: #5599DD;
-      --broken: #A855F7;
-      --border: rgba(255,255,255,0.1);
-    }
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 12px;
-    color: var(--text-primary);
-    padding: 16px;
-    line-height: 1.4;
-  }
-
-  .mono {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-  }
-
-  .section-header {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    padding: 12px 0 4px 0;
-  }
-
-  .summary { padding-bottom: 12px; font-size: 12px; }
-  .summary.pulsating { animation: pulse 1s infinite; }
-
-  button.primary-btn {
-    width: 100%;
-    padding: 8px 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-primary);
-    margin-top: 8px;
-  }
-
-  button.primary-btn:disabled { cursor: default; opacity: 0.6; }
-
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .btn-row button {
-    flex: 1;
-    padding: 8px 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-primary);
-  }
-
-  .btn-row button:disabled { cursor: default; opacity: 0.6; }
-
-  .progress-area { margin-top: 12px; }
-
-  .progress-slot {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    font-size: 11px;
-  }
-
-  .progress-slot .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--border);
-    flex-shrink: 0;
-  }
-
-  .progress-slot.streaming .dot { background: var(--running); animation: pulse 1s infinite; }
-  .progress-slot.done .dot { background: var(--success); }
-  .progress-slot.error .dot { background: var(--error); }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .progress-slot .label { color: var(--text-secondary); }
-  .progress-slot.streaming .label { color: var(--running); animation: pulse 1s infinite; }
-  .progress-slot.done .label { color: var(--text-primary); }
-  .progress-slot.error .label { color: var(--error); }
-
-  .progress-slot .error-detail {
-    font-size: 10px;
-    color: var(--error);
-    padding: 2px 0 2px 14px;
-    display: none;
-  }
-
-  .progress-slot.error .error-detail { display: block; }
-
-  .progress-bar-track {
-    height: 3px;
-    background: var(--border);
-    margin-top: 12px;
-    margin-bottom: 4px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: var(--running);
-    width: 0%;
-    transition: width 0.4s ease, background 0.3s ease;
-  }
-
-  .progress-bar-fill.complete { background: var(--success); }
-  .progress-bar-fill.has-errors { background: var(--error); }
-
-  .violation-row {
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .violation-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .violation-name {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    font-weight: 600;
-    word-break: break-all;
-  }
-
-  .violation-name.fixed {
-    text-decoration: line-through;
-    color: var(--text-secondary);
-  }
-
-  .fix-btn {
-    background: none;
-    border: none;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 11px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0;
-    flex-shrink: 0;
-    margin-left: 8px;
-  }
-
-  .fix-btn:hover { color: var(--text-primary); }
-
-  .violation-rule { color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
-
-  .violation-explanation {
-    color: var(--text-secondary);
-    font-size: 11px;
-    margin-top: 2px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .violation-suggestion {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    margin-top: 2px;
-  }
-
-  .option-row {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-top: 4px;
-    padding: 4px 0;
-  }
-
-  .option-row + .option-row {
-    border-top: 1px solid var(--border);
-  }
-
-  .option-name {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  .option-desc {
-    font-size: 11px;
-    color: var(--text-secondary);
-    flex: 1;
-    min-width: 0;
-  }
-
-  .tab-bar {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 8px 4px;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 11px;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-  }
-
-  .tab-btn:hover { color: var(--text-primary); }
-  .tab-btn.active { color: var(--text-primary); font-weight: 600; }
-  .tab-btn.active[data-tab="error"] { border-bottom-color: var(--error); }
-  .tab-btn.active[data-tab="warning"] { border-bottom-color: var(--warning); }
-  .tab-btn.active[data-tab="note"] { border-bottom-color: var(--note); }
-  .tab-btn.active[data-tab="passed"] { border-bottom-color: var(--success); }
-  .tab-btn.active[data-tab="broken"] { border-bottom-color: var(--broken); }
-
-  .tab-count {
-    display: inline-block;
-    min-width: 16px;
-    padding: 0 4px;
-    font-size: 10px;
-    font-weight: 600;
-    text-align: center;
-    border-radius: 8px;
-    margin-left: 4px;
-  }
-
-  [data-tab="error"] .tab-count { background: var(--error); color: #fff; }
-  [data-tab="warning"] .tab-count { background: var(--warning); color: #fff; }
-  [data-tab="note"] .tab-count { background: var(--note); color: #fff; }
-  [data-tab="passed"] .tab-count { background: var(--success); color: #fff; }
-  [data-tab="broken"] .tab-count { background: var(--broken); color: #fff; }
-
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  .start-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin: 0 -12px;
-    padding: 0 12px;
-  }
-  .start-tab {
-    padding: 8px 12px;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .start-tab:hover { color: var(--text-primary); }
-  .start-tab.active { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--text-primary); }
-  .start-panel { display: none; padding-top: 12px; }
-  .start-panel.active { display: block; }
-
-  .guide-section { margin-bottom: 16px; }
-  .guide-section h3 {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 6px;
-    color: var(--text-secondary);
-  }
-  .guide-section p {
-    font-size: 11px;
-    line-height: 1.5;
-    margin-bottom: 8px;
-  }
-  .guide-layer {
-    background: rgba(0,0,0,0.03);
-    border-radius: 6px;
-    padding: 8px 10px;
-    margin-bottom: 6px;
-  }
-  @media (prefers-color-scheme: dark) {
-    .guide-layer { background: rgba(255,255,255,0.04); }
-  }
-  .guide-layer-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
-  .guide-layer-desc { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
-  .guide-example {
-    font-family: "SF Mono", SFMono-Regular, Menlo, monospace;
-    font-size: 10px;
-    padding: 6px 8px;
-    border-radius: 4px;
-    margin-bottom: 4px;
-    line-height: 1.5;
-    white-space: pre;
-  }
-  .guide-good {
-    background: rgba(26,122,26,0.08);
-    border-left: 2px solid var(--success);
-    color: var(--success);
-  }
-  .guide-bad {
-    background: rgba(204,0,0,0.06);
-    border-left: 2px solid var(--error);
-    color: var(--error);
-  }
-  .guide-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-  .guide-label-good { color: var(--success); }
-  .guide-label-bad { color: var(--error); }
-
-  .level-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-right: 6px;
-    flex-shrink: 0;
-    position: relative;
-    top: -1px;
-  }
-
-  .level-dot.error { background: var(--error); }
-  .level-dot.warning { background: var(--warning); }
-  .level-dot.note { background: var(--note); }
-
-  .passed-row {
-    padding: 4px 0;
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    color: var(--text-secondary);
-    border-top: 1px solid var(--border);
-  }
-
-  .passed-row:first-child { border-top: none; }
-
-  .broken-row {
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .broken-name {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    font-weight: 600;
-    word-break: break-all;
-  }
-
-  .broken-detail {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-  }
-
-  .broken-alias {
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    font-size: 10px;
-    color: var(--broken);
-    margin-top: 2px;
-    word-break: break-all;
-  }
-
-  .pass { text-align: center; padding-top: 40px; }
-  .pass-title { color: var(--success); font-size: 12px; }
-  .pass-sub { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
-
-  .accordion-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .accordion-header .chevron {
-    font-size: 10px;
-    color: var(--text-secondary);
-    transition: transform 0.2s ease;
-  }
-
-  .accordion-header.collapsed .chevron { transform: rotate(-90deg); }
-
-  .accordion-body {
-    overflow: hidden;
-    max-height: 2000px;
-    transition: max-height 0.3s ease;
-  }
-
-  .accordion-body.collapsed {
-    max-height: 0;
-  }
-
-  .arch-failure { margin-top: 8px; }
-  .arch-issue { color: var(--error); font-size: 11px; padding: 2px 0; }
-
-  .fix-row {
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .fix-description { font-size: 11px; flex: 1; }
-  .fix-row .fix-btn { flex-shrink: 0; }
-</style>
+<style>/* __CSS__ */</style>
 
 <div id="app">
-  <div id="registering-view" style="display:none">
-    <div class="summary">Registering...</div>
+  <div id="slot-top">
+    <div class="summary" id="inventory">Loading variables...</div>
   </div>
-  <div id="default-view">
-    <div class="start-tabs">
-      <button class="start-tab active" data-start-tab="audit">Audit</button>
-      <button class="start-tab" data-start-tab="guide">Guide</button>
-    </div>
-
-    <div class="start-panel active" id="start-audit">
-      <div class="summary" id="inventory">Loading variables...</div>
-      <button class="primary-btn" id="run-btn" disabled>Run audit</button>
-    </div>
-
-    <div class="start-panel" id="start-guide">
+  <div id="nav">
+    <button class="active" data-nav="audit">Audit</button>
+    <button data-nav="guide">Guide</button>
+  </div>
+  <div id="slot-middle">
+    <div id="guide-content" style="display:none">
       <div class="guide-section">
         <h3>The 3-layer model</h3>
         <p>A healthy design system separates raw values from meaning from usage. Each layer references the one below it &mdash; never the other way around.</p>
-
         <div class="guide-layer">
           <div class="guide-layer-name">1. Primitives</div>
           <div class="guide-layer-desc">The full palette. Raw color, spacing, and type values. Named by what they are, not what they do.</div>
@@ -472,7 +26,6 @@
           <div class="guide-layer-desc">Component-scoped tokens that reference theme tokens. Tightly bound to a specific UI element.</div>
         </div>
       </div>
-
       <div class="guide-section">
         <h3>Color naming</h3>
         <div class="guide-label guide-label-good">Good</div>
@@ -480,11 +33,10 @@
 themes/color/bg/primary
 components/button/bg/default</div>
         <div class="guide-label guide-label-bad">Bad</div>
-        <div class="guide-example guide-bad">blue               (no layer, ambiguous scope)
-primary-bg          (flat &mdash; mixes intent with layer)
-button-color        (no hierarchy, unclear property)</div>
+        <div class="guide-example guide-bad">blue (no layer, ambiguous scope)
+primary-bg (flat &mdash; mixes intent with layer)
+button-color (no hierarchy, unclear property)</div>
       </div>
-
       <div class="guide-section">
         <h3>Spacing &amp; sizing</h3>
         <div class="guide-label guide-label-good">Good</div>
@@ -492,11 +44,10 @@ button-color        (no hierarchy, unclear property)</div>
 themes/spacing/element/gap
 components/card/padding</div>
         <div class="guide-label guide-label-bad">Bad</div>
-        <div class="guide-example guide-bad">16px               (raw value, no token)
-spacing-medium      (flat, not layered)
-card-gap            (no clear layer or hierarchy)</div>
+        <div class="guide-example guide-bad">16px (raw value, no token)
+spacing-medium (flat, not layered)
+card-gap (no clear layer or hierarchy)</div>
       </div>
-
       <div class="guide-section">
         <h3>Why it matters</h3>
         <p><strong>Without layers</strong> &mdash; theme changes require touching hundreds of components. Renaming a color breaks everything. Dark mode is manual.</p>
@@ -504,69 +55,112 @@ card-gap            (no clear layer or hierarchy)</div>
       </div>
     </div>
   </div>
-  <div id="progress-view" style="display:none">
-    <div class="summary" id="progress-summary">Running audit...</div>
-    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar"></div></div>
-    <div class="progress-area" id="progress-slots"></div>
+  <div id="slot-bottom">
+    <button class="primary-btn" id="run-btn" disabled>Run audit</button>
   </div>
-  <div id="arch-failure-view" style="display:none"></div>
-  <div id="fix-view" style="display:none"></div>
-  <div id="results-view" style="display:none"></div>
 </div>
 
 <script>
   // ─── Configuration ────────────────────────────────────────────────
   var WORKER_URL = "http://localhost:8787";
-  var MODEL      = "claude-sonnet-4-5";
+  var PLUGIN_SECRET = "1ed51296626dce242a4b6ea0f17e4b2e149e1577480fc34b8a5aaa97ce7210ee";
+  var MODEL = "claude-sonnet-4-5";
   var MODEL_FAST = "claude-haiku-4-5";
   // ─────────────────────────────────────────────────────────────────
 
   var variableData = null;
   var componentData = null;
   var brokenReferences = [];
+  var unboundStyles = [];
   var apiToken = null;
 
-  var registeringView = document.getElementById("registering-view");
-  var inventoryEl = document.getElementById("inventory");
+  var slotTop = document.getElementById("slot-top");
+  var nav = document.getElementById("nav");
+  var slotMiddle = document.getElementById("slot-middle");
+  var slotBottom = document.getElementById("slot-bottom");
   var runBtn = document.getElementById("run-btn");
-  var defaultView = document.getElementById("default-view");
-  var progressView = document.getElementById("progress-view");
-  var progressSummary = document.getElementById("progress-summary");
-  var progressSlots = document.getElementById("progress-slots");
-  var archFailureView = document.getElementById("arch-failure-view");
-  var fixView = document.getElementById("fix-view");
-  var resultsView = document.getElementById("results-view");
-  var progressBar = document.getElementById("progress-bar");
+  var inventoryEl = document.getElementById("inventory");
+  var guideContent = document.getElementById("guide-content");
+
+  var progressSummary = null;
+  var progressSlots = null;
+  var progressBar = null;
+  var activeNav = "audit";
+  var auditMiddleContent = null; // saved when switching to guide
 
   var agentProgress = { total: 0, done: 0, errors: 0 };
 
-  // Start-page tab switching
-  (function() {
-    var tabs = document.querySelectorAll(".start-tab");
-    var panels = { audit: document.getElementById("start-audit"), guide: document.getElementById("start-guide") };
-    for (var i = 0; i < tabs.length; i++) {
-      tabs[i].addEventListener("click", function() {
-        var target = this.getAttribute("data-start-tab");
-        for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove("active");
-        this.classList.add("active");
-        panels.audit.classList.remove("active");
-        panels.guide.classList.remove("active");
-        panels[target].classList.add("active");
-      });
-    }
-  })();
+  function clearEl(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  // ─── Nav switching ──────────────────────────────────────────────
+  var navBtns = nav.querySelectorAll("button");
+  for (var i = 0; i < navBtns.length; i++) {
+    navBtns[i].addEventListener("click", function () {
+      var target = this.getAttribute("data-nav");
+      if (target === activeNav) return;
+      for (var j = 0; j < navBtns.length; j++) navBtns[j].classList.toggle("active", navBtns[j].getAttribute("data-nav") === target);
+
+      if (target === "guide") {
+        // Save current audit content, show guide
+        auditMiddleContent = document.createDocumentFragment();
+        while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        slotMiddle.appendChild(guideContent);
+        guideContent.style.display = "";
+      } else {
+        // Restore audit content
+        guideContent.style.display = "none";
+        slotMiddle.appendChild(guideContent); // park it
+        clearEl(slotMiddle);
+        slotMiddle.appendChild(guideContent); // keep in DOM but hidden
+        if (auditMiddleContent) {
+          slotMiddle.insertBefore(auditMiddleContent, guideContent);
+          auditMiddleContent = null;
+        }
+      }
+      activeNav = target;
+    });
+  }
+
+  // ─── Set slot content (for audit views) ─────────────────────────
+  function setSlots(top, middle, bottom) {
+    clearEl(slotTop);
+    clearEl(slotMiddle);
+    clearEl(slotBottom);
+    // Always keep guide in DOM (hidden)
+    slotMiddle.appendChild(guideContent);
+    // top and middle both go into slot-middle (top first)
+    if (top) slotMiddle.insertBefore(top, guideContent);
+    if (middle) slotMiddle.insertBefore(middle, guideContent);
+    if (bottom) slotBottom.appendChild(bottom);
+    else slotBottom.appendChild(runBtn);
+    // Ensure we're on audit tab
+    activeNav = "audit";
+    for (var j = 0; j < navBtns.length; j++) navBtns[j].classList.toggle("active", navBtns[j].getAttribute("data-nav") === "audit");
+    guideContent.style.display = "none";
+  }
+
+  function showDefaultView() {
+    inventoryEl = document.createElement("div");
+    inventoryEl.className = "summary";
+    inventoryEl.id = "inventory";
+    inventoryEl.textContent = "Loading variables...";
+    setSlots(inventoryEl, null, null);
+    updateInventoryDisplay();
+  }
 
   function updateInventoryDisplay() {
+    if (!inventoryEl) return;
     var parts = [];
     if (variableData) {
-      var totalVars = variableData.collections.reduce(function(sum, c) { return sum + c.variables.length; }, 0);
+      var totalVars = variableData.collections.reduce(function (sum, c) { return sum + c.variables.length; }, 0);
       parts.push(variableData.collections.length + " collections \u00b7 " + totalVars + " variables");
     }
     if (componentData) {
       parts.push(componentData.length + " components");
     }
-    if (brokenReferences.length > 0) {
-      parts.push(brokenReferences.length + " broken");
+    var totalBroken = unboundStyles.length + brokenReferences.length;
+    if (totalBroken > 0) {
+      parts.push(totalBroken + " broken");
     }
     inventoryEl.textContent = parts.join(" \u00b7 ") || "Loading...";
     runBtn.disabled = !variableData;
@@ -577,8 +171,8 @@ card-gap            (no clear layer or hierarchy)</div>
     (crypto || window.crypto).getRandomValues(arr);
     arr[6] = (arr[6] & 0x0f) | 0x40;
     arr[8] = (arr[8] & 0x3f) | 0x80;
-    var hex = Array.from(arr, function(b) { return b.toString(16).padStart(2, "0"); }).join("");
-    return hex.slice(0,8)+"-"+hex.slice(8,12)+"-"+hex.slice(12,16)+"-"+hex.slice(16,20)+"-"+hex.slice(20);
+    var hex = Array.from(arr, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-" + hex.slice(12, 16) + "-" + hex.slice(16, 20) + "-" + hex.slice(20);
   }
 
   function updateProgressBar() {
@@ -593,31 +187,35 @@ card-gap            (no clear layer or hierarchy)</div>
     progressSummary.textContent = "Auditing collections \u2014 " + agentProgress.done + "/" + agentProgress.total + " complete";
   }
 
-  function showView(view) {
-    [defaultView, progressView, archFailureView, fixView, resultsView, registeringView].forEach(function(v) {
-      v.style.display = "none";
-    });
-    view.style.display = "block";
+  function showRegistering() {
+    var summary = document.createElement("div");
+    summary.className = "summary";
+    summary.textContent = "Registering...";
+    setSlots(summary, null, null);
   }
 
   // ─── Receive messages from code.js ────────────────────────────────
-  window.onmessage = function(event) {
+  window.onmessage = function (event) {
     var msg = event.data.pluginMessage;
     if (!msg) return;
 
     if (msg.type === "auth-ready") {
       apiToken = msg.token;
-      showView(defaultView);
     }
 
     if (msg.type === "register-user") {
-      showView(registeringView);
+      showRegistering();
       registerUser(msg.figmaUserId, msg.figmaUserName);
     }
 
     if (msg.type === "variable-data") {
       variableData = msg.data;
       brokenReferences = msg.data.brokenReferences || [];
+      updateInventoryDisplay();
+    }
+
+    if (msg.type === "style-data") {
+      unboundStyles = msg.data || [];
       updateInventoryDisplay();
     }
 
@@ -660,12 +258,12 @@ card-gap            (no clear layer or hierarchy)</div>
   // ─── Orchestrator: architecture validation ────────────────────────
   function validateArchitecture(collections) {
     var expected = ["primitives", "themes", "components"];
-    var names = collections.map(function(c) { return c.name.toLowerCase(); });
+    var names = collections.map(function (c) { return c.name.toLowerCase(); });
     var issues = [];
 
     for (var i = 0; i < expected.length; i++) {
       if (names.indexOf(expected[i]) === -1) {
-        var closeMatch = collections.find(function(c) {
+        var closeMatch = collections.find(function (c) {
           return c.name.toLowerCase() === expected[i] && c.name !== expected[i];
         });
         if (closeMatch) {
@@ -695,10 +293,10 @@ card-gap            (no clear layer or hierarchy)</div>
     var primitiveNames = [];
     var themeNames = [];
     if (byName.primitives) {
-      primitiveNames = byName.primitives.variables.map(function(v) { return v.name; });
+      primitiveNames = byName.primitives.variables.map(function (v) { return v.name; });
     }
     if (byName.themes) {
-      themeNames = byName.themes.variables.map(function(v) { return v.name; });
+      themeNames = byName.themes.variables.map(function (v) { return v.name; });
     }
 
     var referencedPrimitives = {};
@@ -726,8 +324,8 @@ card-gap            (no clear layer or hierarchy)</div>
       }
     }
 
-    var unreferencedPrimitives = primitiveNames.filter(function(n) { return !referencedPrimitives[n]; });
-    var unreferencedThemes = themeNames.filter(function(n) { return !referencedThemes[n]; });
+    var unreferencedPrimitives = primitiveNames.filter(function (n) { return !referencedPrimitives[n]; });
+    var unreferencedThemes = themeNames.filter(function (n) { return !referencedThemes[n]; });
 
     return {
       primitiveNames: primitiveNames,
@@ -751,7 +349,7 @@ card-gap            (no clear layer or hierarchy)</div>
       for (var p = 0; p < byName.primitives.variables.length; p++) {
         var pv = byName.primitives.variables[p];
         var pmodes = Object.keys(pv.valuesByMode);
-        var hasAlias = pmodes.some(function(m) { return pv.valuesByMode[m].aliasId !== null; });
+        var hasAlias = pmodes.some(function (m) { return pv.valuesByMode[m].aliasId !== null; });
 
         if (hasAlias) {
           violations.push({
@@ -779,7 +377,7 @@ card-gap            (no clear layer or hierarchy)</div>
       for (var t = 0; t < byName.themes.variables.length; t++) {
         var tv = byName.themes.variables[t];
         var tmodes = Object.keys(tv.valuesByMode);
-        var allHardcoded = tmodes.every(function(m) { return tv.valuesByMode[m].aliasId === null; });
+        var allHardcoded = tmodes.every(function (m) { return tv.valuesByMode[m].aliasId === null; });
         var hasBadAlias = false;
         if (!allHardcoded) {
           for (var tm = 0; tm < tmodes.length; tm++) {
@@ -824,7 +422,7 @@ card-gap            (no clear layer or hierarchy)</div>
       for (var c = 0; c < byName.components.variables.length; c++) {
         var cv = byName.components.variables[c];
         var cmodes = Object.keys(cv.valuesByMode);
-        var compAllHardcoded = cmodes.every(function(m) { return cv.valuesByMode[m].aliasId === null; });
+        var compAllHardcoded = cmodes.every(function (m) { return cv.valuesByMode[m].aliasId === null; });
         var compBadAlias = false;
         if (!compAllHardcoded) {
           for (var cm = 0; cm < cmodes.length; cm++) {
@@ -921,22 +519,41 @@ card-gap            (no clear layer or hierarchy)</div>
     }
   }
 
+  function showProgressView() {
+    var middleFrag = document.createDocumentFragment();
+    progressSummary = document.createElement("div");
+    progressSummary.className = "summary pulsating";
+    progressSummary.textContent = "Running audit...";
+    middleFrag.appendChild(progressSummary);
+
+    var track = document.createElement("div");
+    track.className = "progress-bar-track";
+    progressBar = document.createElement("div");
+    progressBar.className = "progress-bar-fill";
+    track.appendChild(progressBar);
+    middleFrag.appendChild(track);
+
+    progressSlots = document.createElement("div");
+    progressSlots.className = "progress-area";
+    middleFrag.appendChild(progressSlots);
+
+    setSlots(null, middleFrag, null);
+    runBtn.disabled = true;
+  }
+
   // ─── Run audit ────────────────────────────────────────────────────
-  runBtn.addEventListener("click", async function() {
+  runBtn.addEventListener("click", async function () {
     if (!variableData || !apiToken) return;
     runBtn.disabled = true;
 
-    // Set up progress view with all steps visible
-    showView(progressView);
-    progressBar.style.width = "0%";
-    progressBar.classList.remove("complete", "has-errors");
-    progressSummary.classList.add("pulsating");
-    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
+    // Set up progress view in slots
+    showProgressView();
     var hasComponents = componentData && componentData.length > 0;
-    var totalSteps = hasComponents ? 5 : 4;
+    var totalSteps = hasComponents ? 6 : 5;
     agentProgress = { total: totalSteps, done: 0, errors: 0 };
 
     var archSlot = createProgressSlot("Validating architecture");
+    var stylesSlot = createProgressSlot("Checking file health");
     var primSlot = createProgressSlot("Auditing primitives");
     var themeSlot = createProgressSlot("Auditing themes");
     var compSlot = createProgressSlot("Auditing components");
@@ -946,7 +563,7 @@ card-gap            (no clear layer or hierarchy)</div>
     archSlot.el.classList.add("streaming");
 
     // Small delay so the user sees the step
-    await new Promise(function(r) { setTimeout(r, 300); });
+    await new Promise(function (r) { setTimeout(r, 300); });
 
     var archIssues = validateArchitecture(variableData.collections);
 
@@ -958,7 +575,7 @@ card-gap            (no clear layer or hierarchy)</div>
       agentProgress.errors++;
       updateProgressBar();
       progressSummary.classList.remove("pulsating");
-      await new Promise(function(r) { setTimeout(r, 500); });
+      await new Promise(function (r) { setTimeout(r, 500); });
       showArchitectureFailure(archIssues);
       return;
     }
@@ -969,22 +586,34 @@ card-gap            (no clear layer or hierarchy)</div>
     agentProgress.done++;
     updateProgressBar();
 
+    // Check styles for unbound properties (client-side, deterministic)
+    stylesSlot.el.classList.add("streaming");
+    await new Promise(function (r) { setTimeout(r, 200); });
+    var styleIssueCount = unboundStyles.length;
+    stylesSlot.el.classList.remove("streaming");
+    if (styleIssueCount > 0) {
+      stylesSlot.el.classList.add("error");
+      stylesSlot.label.textContent = "File health \u2014 " + styleIssueCount + " unbound properties";
+    } else {
+      stylesSlot.el.classList.add("done");
+      stylesSlot.label.textContent = "File health \u2014 all styles bound";
+    }
+    agentProgress.done++;
+    updateProgressBar();
+
     await runParallelAudit({ primSlot: primSlot, themeSlot: themeSlot, compSlot: compSlot, healthSlot: healthSlot });
   });
 
   // ─── Architecture failure UI ──────────────────────────────────────
   function showArchitectureFailure(issues) {
-    showView(archFailureView);
-    while (archFailureView.firstChild) archFailureView.removeChild(archFailureView.firstChild);
-
     var title = document.createElement("div");
     title.className = "summary";
     var titleSpan = document.createElement("span");
     titleSpan.style.color = "var(--error)";
     titleSpan.textContent = "Architecture check failed";
     title.appendChild(titleSpan);
-    archFailureView.appendChild(title);
 
+    var middle = document.createDocumentFragment();
     var issueList = document.createElement("div");
     issueList.className = "arch-failure";
     for (var i = 0; i < issues.length; i++) {
@@ -993,41 +622,38 @@ card-gap            (no clear layer or hierarchy)</div>
       issueEl.textContent = issues[i];
       issueList.appendChild(issueEl);
     }
-    archFailureView.appendChild(issueList);
+    middle.appendChild(issueList);
 
     var btnRow = document.createElement("div");
     btnRow.className = "btn-row";
-
     var fixBtn = document.createElement("button");
     fixBtn.textContent = "Fix it";
-    fixBtn.addEventListener("click", function() { runFixAgent(); });
-
+    fixBtn.addEventListener("click", function () { runFixAgent(); });
     var genericBtn = document.createElement("button");
     genericBtn.textContent = "Run generic check";
-    genericBtn.addEventListener("click", function() { runGenericAudit(); });
-
+    genericBtn.addEventListener("click", function () { runGenericAudit(); });
     btnRow.appendChild(fixBtn);
     btnRow.appendChild(genericBtn);
-    archFailureView.appendChild(btnRow);
+
+    setSlots(title, middle, btnRow);
   }
 
   // ─── Fix agent ────────────────────────────────────────────────────
   async function runFixAgent() {
-    showView(progressView);
+    showProgressView();
     progressSummary.textContent = "Analyzing architecture issues...";
-    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
 
     var slot = createProgressSlot("Architecture fix");
     slot.el.classList.add("streaming");
 
     try {
-      var structure = variableData.collections.map(function(c) {
+      var structure = variableData.collections.map(function (c) {
         return {
           id: c.id || c.name,
           name: c.name,
           modes: c.modes,
           variableCount: c.variables.length,
-          variables: c.variables.map(function(v) {
+          variables: c.variables.map(function (v) {
             return { id: v.id, name: v.name, type: v.type };
           }),
         };
@@ -1047,7 +673,7 @@ card-gap            (no clear layer or hierarchy)</div>
       });
 
       if (!resp.ok) {
-        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) { }
         throw { reason: "HTTP " + resp.status, detail: errBody.slice(0, 200) };
       }
 
@@ -1069,16 +695,13 @@ card-gap            (no clear layer or hierarchy)</div>
 
   // ─── Render fixes ─────────────────────────────────────────────────
   function renderFixes(fixes) {
-    showView(fixView);
-    while (fixView.firstChild) fixView.removeChild(fixView.firstChild);
-
     var title = document.createElement("div");
     title.className = "summary";
     title.textContent = fixes.length + " suggested fixes";
-    fixView.appendChild(title);
 
+    var middle = document.createDocumentFragment();
     for (var i = 0; i < fixes.length; i++) {
-      (function(fix, index) {
+      (function (fix, index) {
         var row = document.createElement("div");
         row.className = "fix-row";
         row.setAttribute("data-fix-action", fix.action + "-" + index);
@@ -1090,7 +713,7 @@ card-gap            (no clear layer or hierarchy)</div>
         var btn = document.createElement("button");
         btn.className = "fix-btn";
         btn.textContent = "Fix";
-        btn.addEventListener("click", function() {
+        btn.addEventListener("click", function () {
           btn.textContent = "Fixing\u2026";
           btn.disabled = true;
 
@@ -1106,24 +729,25 @@ card-gap            (no clear layer or hierarchy)</div>
 
         row.appendChild(desc);
         row.appendChild(btn);
-        fixView.appendChild(row);
+        middle.appendChild(row);
       })(fixes[i], i);
     }
 
-    addRerunButton(fixView);
+    var bottom = document.createDocumentFragment();
+    addRerunButton(bottom);
+    setSlots(title, middle, bottom);
   }
 
   // ─── Generic audit ────────────────────────────────────────────────
   async function runGenericAudit() {
-    showView(progressView);
+    showProgressView();
     progressSummary.textContent = "Running generic audit...";
-    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
 
     var slot = createProgressSlot("Full audit");
     slot.el.classList.add("streaming");
 
     try {
-      var totalVars = variableData.collections.reduce(function(s, c) { return s + c.variables.length; }, 0);
+      var totalVars = variableData.collections.reduce(function (s, c) { return s + c.variables.length; }, 0);
 
       var resp = await fetch(WORKER_URL + "/audit/generic", {
         method: "POST",
@@ -1140,7 +764,7 @@ card-gap            (no clear layer or hierarchy)</div>
       });
 
       if (!resp.ok) {
-        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) { }
         throw { reason: "HTTP " + resp.status, detail: errBody.slice(0, 200) };
       }
 
@@ -1170,7 +794,7 @@ card-gap            (no clear layer or hierarchy)</div>
     var filtered = preFilter.filteredCollections;
 
     // True total from original data (before filtering)
-    var originalTotalVars = variableData.collections.reduce(function(s, c) { return s + c.variables.length; }, 0);
+    var originalTotalVars = variableData.collections.reduce(function (s, c) { return s + c.variables.length; }, 0);
 
     var auditGroupId = generateId();
     var allViolations = [];
@@ -1211,7 +835,7 @@ card-gap            (no clear layer or hierarchy)</div>
       agents[a].slot.el.classList.add("streaming");
     }
 
-    var promises = agents.map(function(agent) {
+    var promises = agents.map(function (agent) {
       return runSingleAgent(agent, auditGroupId, agent.slot);
     });
 
@@ -1241,6 +865,7 @@ card-gap            (no clear layer or hierarchy)</div>
         if (healthResult.passed) allPassed = allPassed.concat(healthResult.passed);
       }
     }
+
 
     // Prepend client-side deterministic violations
     allViolations = clientViolations.concat(allViolations);
@@ -1280,7 +905,7 @@ card-gap            (no clear layer or hierarchy)</div>
           throw { reason: "Authentication failed", detail: "Your session has expired. Restart the plugin to re-authenticate." };
         }
         var errBody = "";
-        try { errBody = await resp.text(); } catch (_e) {}
+        try { errBody = await resp.text(); } catch (_e) { }
         var errMsg = "";
         try {
           var parsed = JSON.parse(errBody);
@@ -1301,7 +926,7 @@ card-gap            (no clear layer or hierarchy)</div>
       }
 
       var lastCount = 0;
-      var result = await readSSEStream(resp, function(accText) {
+      var result = await readSSEStream(resp, function (accText) {
         var matches = accText.match(/"level"\s*:\s*"(?:error|warning|note)"/g);
         var count = matches ? matches.length : 0;
         if (count !== lastCount) {
@@ -1364,7 +989,7 @@ card-gap            (no clear layer or hierarchy)</div>
       });
       if (!resp.ok) {
         if (resp.status === 401) { apiToken = null; parent.postMessage({ pluginMessage: { type: "clear-token" } }, "*"); throw { reason: "Authentication failed", detail: "Session expired. Restart plugin." }; }
-        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) { }
         var errMsg = ""; try { var parsed = JSON.parse(errBody); errMsg = parsed.error && parsed.error.message ? parsed.error.message : parsed.error || ""; } catch (_e2) { errMsg = errBody.slice(0, 200); }
         if (resp.status === 429) throw { reason: "Rate limited", detail: "Too many requests." + (errMsg ? " (" + errMsg + ")" : "") };
         if (resp.status === 413) throw { reason: "Payload too large", detail: "Too many components for a single request." };
@@ -1372,7 +997,7 @@ card-gap            (no clear layer or hierarchy)</div>
         throw { reason: "HTTP " + resp.status, detail: errMsg || "Unexpected error." };
       }
       var lastCount = 0;
-      var result = await readSSEStream(resp, function(accText) {
+      var result = await readSSEStream(resp, function (accText) {
         var matches = accText.match(/"level"\s*:\s*"(?:error|warning|note)"/g);
         var count = matches ? matches.length : 0;
         if (count !== lastCount) {
@@ -1436,9 +1061,6 @@ card-gap            (no clear layer or hierarchy)</div>
 
   // ─── Render results ───────────────────────────────────────────────
   function renderResults(result) {
-    showView(resultsView);
-    while (resultsView.firstChild) resultsView.removeChild(resultsView.firstChild);
-
     var totalVars = result.summary.total_variables;
     var totalViolations = result.summary.total_violations;
     var passed = result.passed || [];
@@ -1455,9 +1077,11 @@ card-gap            (no clear layer or hierarchy)</div>
     var warningCount = byLevel.warning.length;
     var noteCount = byLevel.note.length;
     var passedCount = passed.length;
-    var brokenCount = brokenReferences.length;
+    var brokenCount = brokenReferences.length + unboundStyles.length;
 
-    // Summary line
+    // Top: summary + tab bar
+    var topFrag = document.createDocumentFragment();
+
     var summaryEl = document.createElement("div");
     summaryEl.className = "summary";
     var summaryColor = (brokenCount > 0 || errorCount > 0) ? "var(--error)" : warningCount > 0 ? "var(--warning)" : "var(--success)";
@@ -1468,14 +1092,13 @@ card-gap            (no clear layer or hierarchy)</div>
     summarySpan.style.color = summaryColor;
     summarySpan.textContent = summaryParts.join(" \u00b7 ");
     summaryEl.appendChild(summarySpan);
-    resultsView.appendChild(summaryEl);
+    topFrag.appendChild(summaryEl);
 
-    // Tab bar
     var tabBar = document.createElement("div");
     tabBar.className = "tab-bar";
 
     var tabs = [
-      { key: "broken", label: "Broken", count: brokenCount },
+      { key: "broken", label: "File Health", count: brokenCount },
       { key: "error", label: "Errors", count: errorCount },
       { key: "warning", label: "Warnings", count: warningCount },
       { key: "note", label: "Notes", count: noteCount },
@@ -1485,20 +1108,20 @@ card-gap            (no clear layer or hierarchy)</div>
     var panels = {};
 
     for (var t = 0; t < tabs.length; t++) {
-      (function(tab) {
+      (function (tab) {
+        if (tab.count === 0) return;
+
         var btn = document.createElement("button");
         btn.className = "tab-btn";
         btn.setAttribute("data-tab", tab.key);
         btn.textContent = tab.label;
 
-        if (tab.count > 0) {
-          var badge = document.createElement("span");
-          badge.className = "tab-count";
-          badge.textContent = String(tab.count);
-          btn.appendChild(badge);
-        }
+        var badge = document.createElement("span");
+        badge.className = "tab-count";
+        badge.textContent = String(tab.count);
+        btn.appendChild(badge);
 
-        btn.addEventListener("click", function() {
+        btn.addEventListener("click", function () {
           var allBtns = tabBar.querySelectorAll(".tab-btn");
           for (var i = 0; i < allBtns.length; i++) allBtns[i].classList.remove("active");
           btn.classList.add("active");
@@ -1516,63 +1139,37 @@ card-gap            (no clear layer or hierarchy)</div>
       })(tabs[t]);
     }
 
-    resultsView.appendChild(tabBar);
+    topFrag.appendChild(tabBar);
 
-    // Render broken references panel
-    if (brokenCount > 0) {
-      renderBrokenPanel(panels.broken, brokenReferences);
-    } else {
-      var noBroken = document.createElement("div");
-      noBroken.className = "pass";
-      noBroken.style.paddingTop = "24px";
-      var noBrokenTitle = document.createElement("div");
-      noBrokenTitle.className = "pass-sub";
-      noBrokenTitle.textContent = "No broken references";
-      noBroken.appendChild(noBrokenTitle);
-      panels.broken.appendChild(noBroken);
+    // Middle: scrollable panel content
+    var middle = document.createDocumentFragment();
+
+    if (panels.broken) {
+      renderBrokenPanel(panels.broken, unboundStyles, brokenReferences);
+      middle.appendChild(panels.broken);
     }
-    resultsView.appendChild(panels.broken);
 
-    // Render violation panels (error, warning, note)
     var levelKeys = ["error", "warning", "note"];
     for (var l = 0; l < levelKeys.length; l++) {
-      var levelViolations = byLevel[levelKeys[l]];
-      if (levelViolations.length > 0) {
-        renderViolationsInPanel(panels[levelKeys[l]], levelViolations, levelKeys[l]);
-      } else {
-        var emptyMsg = document.createElement("div");
-        emptyMsg.className = "pass";
-        emptyMsg.style.paddingTop = "24px";
-        var emptyTitle = document.createElement("div");
-        emptyTitle.className = "pass-sub";
-        emptyTitle.textContent = "No " + levelKeys[l] + "s";
-        emptyMsg.appendChild(emptyTitle);
-        panels[levelKeys[l]].appendChild(emptyMsg);
-      }
-      resultsView.appendChild(panels[levelKeys[l]]);
+      if (!panels[levelKeys[l]]) continue;
+      renderViolationsInPanel(panels[levelKeys[l]], byLevel[levelKeys[l]], levelKeys[l]);
+      middle.appendChild(panels[levelKeys[l]]);
     }
 
-    // Render passed panel
-    if (passedCount > 0) {
+    if (panels.passed) {
       renderPassedPanel(panels.passed, passed);
-    } else {
-      var noPassed = document.createElement("div");
-      noPassed.className = "pass";
-      noPassed.style.paddingTop = "24px";
-      var noPassedTitle = document.createElement("div");
-      noPassedTitle.className = "pass-sub";
-      noPassedTitle.textContent = "No passing variables";
-      noPassed.appendChild(noPassedTitle);
-      panels.passed.appendChild(noPassed);
+      middle.appendChild(panels.passed);
     }
-    resultsView.appendChild(panels.passed);
 
-    // Activate first tab that has items
-    var firstActive = brokenCount > 0 ? "broken" : errorCount > 0 ? "error" : warningCount > 0 ? "warning" : noteCount > 0 ? "note" : "passed";
-    var firstBtn = tabBar.querySelector("[data-tab=\"" + firstActive + "\"]");
+    // Bottom: re-run button
+    var bottom = document.createDocumentFragment();
+    addRerunButton(bottom);
+
+    setSlots(topFrag, middle, bottom);
+
+    // Activate first tab
+    var firstBtn = tabBar.querySelector(".tab-btn");
     if (firstBtn) firstBtn.click();
-
-    addRerunButton(resultsView);
   }
 
   function renderViolationsInPanel(panel, violations, level) {
@@ -1628,18 +1225,30 @@ card-gap            (no clear layer or hierarchy)</div>
     }
   }
 
-  function renderBrokenPanel(panel, refs) {
-    // Group by collection
+  function renderBrokenPanel(panel, styles, refs) {
+    // Normalize both inputs into a common shape and group by collection
+    var typeLabels = { TEXT: "text styles", PAINT: "paint styles", EFFECT: "effect styles", GRID: "grid styles" };
     var groups = {};
-    for (var i = 0; i < refs.length; i++) {
-      var key = refs[i].collection.toLowerCase();
+
+    for (var i = 0; i < styles.length; i++) {
+      var s = styles[i];
+      var key = (typeLabels[s.styleType] || s.styleType.toLowerCase());
       if (!groups[key]) groups[key] = [];
-      groups[key].push(refs[i]);
+      groups[key].push({ name: s.styleName, detail: s.property + " is not bound to a variable", sub: "Current value: " + s.currentValue });
+    }
+
+    for (var j = 0; j < refs.length; j++) {
+      var r = refs[j];
+      var key = r.collection.toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      var detail = r.source === "style"
+        ? "Bound variable deleted on property \"" + r.property + "\" (" + r.mode + ")"
+        : "References a deleted variable in mode \"" + r.mode + "\"";
+      groups[key].push({ name: r.variableName, detail: detail, sub: r.brokenAliasId });
     }
 
     var sectionOrder = ["primitives", "themes", "components", "paint styles", "text styles", "effect styles", "grid styles"];
     var allKeys = Object.keys(groups);
-    // Add any non-standard collections
     for (var k = 0; k < allKeys.length; k++) {
       if (sectionOrder.indexOf(allKeys[k]) === -1) sectionOrder.push(allKeys[k]);
     }
@@ -1653,29 +1262,25 @@ card-gap            (no clear layer or hierarchy)</div>
       header.textContent = section.toUpperCase() + " (" + groups[section].length + ")";
       panel.appendChild(header);
 
-      for (var j = 0; j < groups[section].length; j++) {
-        var ref = groups[section][j];
+      for (var n = 0; n < groups[section].length; n++) {
+        var item = groups[section][n];
         var row = document.createElement("div");
         row.className = "broken-row";
 
-        var name = document.createElement("div");
-        name.className = "broken-name";
-        name.textContent = ref.variableName;
-        row.appendChild(name);
+        var nameEl = document.createElement("div");
+        nameEl.className = "broken-name";
+        nameEl.textContent = item.name;
+        row.appendChild(nameEl);
 
-        var detail = document.createElement("div");
-        detail.className = "broken-detail";
-        if (ref.source === "style") {
-          detail.textContent = "Bound variable deleted on property \"" + ref.property + "\" (" + ref.mode + ")";
-        } else {
-          detail.textContent = "References a deleted variable in mode \"" + ref.mode + "\"";
-        }
-        row.appendChild(detail);
+        var detailEl = document.createElement("div");
+        detailEl.className = "broken-detail";
+        detailEl.textContent = item.detail;
+        row.appendChild(detailEl);
 
-        var alias = document.createElement("div");
-        alias.className = "broken-alias";
-        alias.textContent = ref.brokenAliasId;
-        row.appendChild(alias);
+        var subEl = document.createElement("div");
+        subEl.className = "broken-alias";
+        subEl.textContent = item.sub;
+        row.appendChild(subEl);
 
         panel.appendChild(row);
       }
@@ -1686,10 +1291,9 @@ card-gap            (no clear layer or hierarchy)</div>
     var rerunBtn = document.createElement("button");
     rerunBtn.className = "primary-btn";
     rerunBtn.textContent = "Re-run audit";
-    rerunBtn.style.marginTop = "16px";
-    rerunBtn.addEventListener("click", function() {
+    rerunBtn.addEventListener("click", function () {
       parent.postMessage({ pluginMessage: { type: "reload-variables" } }, "*");
-      showView(defaultView);
+      showDefaultView();
       runBtn.disabled = false;
       runBtn.textContent = "Run audit";
     });
@@ -1701,7 +1305,7 @@ card-gap            (no clear layer or hierarchy)</div>
     try {
       var resp = await fetch(WORKER_URL + "/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Plugin-Secret": PLUGIN_SECRET },
         body: JSON.stringify({ figmaUserId: figmaUserId, figmaUserName: figmaUserName }),
       });
 
@@ -1713,15 +1317,18 @@ card-gap            (no clear layer or hierarchy)</div>
       var data = await resp.json();
       apiToken = data.token;
       parent.postMessage({ pluginMessage: { type: "store-token", token: data.token } }, "*");
-      showView(defaultView);
+      showDefaultView();
     } catch (err) {
       parent.postMessage({ pluginMessage: { type: "registration-failed", message: err.message } }, "*");
-      showView(defaultView);
-      inventoryEl.textContent = "Registration failed. Restart the plugin.";
+      showDefaultView();
+      if (inventoryEl) inventoryEl.textContent = "Registration failed. Restart the plugin.";
     }
   }
 
   function renderSectionInPanel(panel, title, violations, level) {
+    var item = document.createElement("div");
+    item.className = "accordion-item";
+
     var header = document.createElement("div");
     header.className = "section-header accordion-header";
 
@@ -1734,12 +1341,12 @@ card-gap            (no clear layer or hierarchy)</div>
     chevron.textContent = "\u25BC";
     header.appendChild(chevron);
 
-    panel.appendChild(header);
+    item.appendChild(header);
 
     var body = document.createElement("div");
     body.className = "accordion-body";
 
-    header.addEventListener("click", function() {
+    header.addEventListener("click", function () {
       header.classList.toggle("collapsed");
       body.classList.toggle("collapsed");
     });
@@ -1748,6 +1355,7 @@ card-gap            (no clear layer or hierarchy)</div>
       var v = violations[i];
       var row = document.createElement("div");
       row.className = "violation-row";
+      row.setAttribute("data-level", level);
       if (v.variable_id) row.setAttribute("data-var-id", v.variable_id);
 
       var topLine = document.createElement("div");
@@ -1771,52 +1379,66 @@ card-gap            (no clear layer or hierarchy)</div>
       row.appendChild(explEl);
 
       var options = v.options || [];
-      for (var j = 0; j < options.length; j++) {
-        (function(opt, violation) {
-          var optRow = document.createElement("div");
-          optRow.className = "option-row";
+      if (options.length > 0) {
+        var optionsArea = document.createElement("div");
+        optionsArea.className = "options-area";
 
-          if (opt.name) {
-            var optName = document.createElement("span");
-            optName.className = "option-name";
-            optName.textContent = opt.name;
-            optRow.appendChild(optName);
-          }
+        var optionsLabel = document.createElement("div");
+        optionsLabel.className = "options-label";
+        optionsLabel.textContent = "Suggestions";
+        optionsArea.appendChild(optionsLabel);
 
-          var optDesc = document.createElement("span");
-          optDesc.className = "option-desc";
-          optDesc.textContent = opt.description;
-          optRow.appendChild(optDesc);
+        for (var j = 0; j < options.length; j++) {
+          (function (opt, violation) {
+            var optRow = document.createElement("div");
+            optRow.className = "option-row";
 
-          var optBtn = document.createElement("button");
-          optBtn.className = "fix-btn";
+            if (opt.name) {
+              var optName = document.createElement("span");
+              optName.className = "option-name";
+              optName.textContent = opt.name;
+              optRow.appendChild(optName);
+            }
 
-          if (violation.variable_id && opt.name) {
-            optBtn.textContent = "Fix";
-            optBtn.addEventListener("click", function() {
-              parent.postMessage({ pluginMessage: { type: "rename-variable", id: violation.variable_id, newName: opt.name } }, "*");
-              optBtn.textContent = "Fixing\u2026";
-              optBtn.disabled = true;
-            });
-          } else {
-            optBtn.textContent = "Copy";
-            optBtn.addEventListener("click", function() {
-              navigator.clipboard.writeText(opt.name || opt.description).then(function() {
-                optBtn.textContent = "Copied";
-                setTimeout(function() { optBtn.textContent = "Copy"; }, 2000);
+            var optDesc = document.createElement("span");
+            optDesc.className = "option-desc";
+            optDesc.textContent = opt.description;
+            optRow.appendChild(optDesc);
+
+            var optBtn = document.createElement("button");
+            optBtn.className = "fix-btn";
+
+            if (violation.variable_id && opt.name) {
+              optBtn.textContent = "Fix";
+              optBtn.addEventListener("click", function () {
+                parent.postMessage({ pluginMessage: { type: "rename-variable", id: violation.variable_id, newName: opt.name } }, "*");
+                optBtn.textContent = "Fixing\u2026";
+                optBtn.disabled = true;
               });
-            });
-          }
+            } else if (opt.action === "delete-variable" && violation.variable_id) {
+              optBtn.textContent = "Delete";
+              optBtn.addEventListener("click", function () {
+                parent.postMessage({ pluginMessage: { type: "delete-variable", variableId: violation.variable_id } }, "*");
+                optBtn.textContent = "Deleting\u2026";
+                optBtn.disabled = true;
+              });
+            } else {
+              optBtn.remove();
+            }
 
-          optRow.appendChild(optBtn);
-          row.appendChild(optRow);
-        })(options[j], v);
+            optRow.appendChild(optBtn);
+            optionsArea.appendChild(optRow);
+          })(options[j], v);
+        }
+
+        row.appendChild(optionsArea);
       }
 
       body.appendChild(row);
     }
 
-    panel.appendChild(body);
+    item.appendChild(body);
+    panel.appendChild(item);
   }
 
   parent.postMessage({ pluginMessage: { type: "ui-ready" } }, "*");
