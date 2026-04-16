@@ -200,6 +200,7 @@ card-gap (no clear layer or hierarchy)</div>
         }
 
         var editBtn = document.createElement("button");
+        editBtn.className = "secondary-btn";
         editBtn.textContent = "Edit";
         editBtn.addEventListener("click", function () {
           showPromptEditor(entry);
@@ -257,18 +258,26 @@ card-gap (no clear layer or hierarchy)</div>
     var footer = document.createElement("div");
     footer.className = "editor-footer";
 
+    var cancelBtn = document.createElement("button");
+    cancelBtn.className = "secondary-btn";
+    cancelBtn.textContent = "Cancel";
+    footer.appendChild(cancelBtn);
+
     var saveBtn = document.createElement("button");
     saveBtn.className = "primary-btn";
     saveBtn.textContent = "Save";
     footer.appendChild(saveBtn);
 
-    // Back: discard confirmation if changed
-    backBtn.addEventListener("click", function () {
+    function doCancel() {
       if (textarea.value !== initialText) {
         if (!confirm("Discard unsaved changes?")) return;
       }
       showSettingsView();
-    });
+    }
+
+    // Back: discard confirmation if changed
+    backBtn.addEventListener("click", doCancel);
+    cancelBtn.addEventListener("click", doCancel);
 
     // Reset: delete key and go back to list
     if (resetBtn) {

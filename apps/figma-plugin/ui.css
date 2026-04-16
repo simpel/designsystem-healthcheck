@@ -549,5 +549,11 @@ button.secondary-btn:hover { color: var(--text-primary); }
 .editor-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding-top: 10px;
+}
+
+.editor-footer .primary-btn {
+  width: auto;
+  padding: 8px 20px;
 }
