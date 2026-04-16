@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 560, height: 600 });
+figma.showUI(__html__, { width: 800, height: 800 });
 
 interface SerializedVariableValue {
   aliasId: string | null;
@@ -66,9 +66,16 @@ interface UnboundStyleProperty {
   currentValue: string;
 }
 
-function stringifyValue(value: unknown, type: VariableResolvedDataType): string | null {
+function stringifyValue(
+  value: unknown,
+  type: VariableResolvedDataType,
+): string | null {
   if (value === null || value === undefined) return null;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return String(value);
   }
   if (type === "COLOR" && typeof value === "object") {
@@ -90,9 +97,10 @@ function stringifyValue(value: unknown, type: VariableResolvedDataType): string 
   return JSON.stringify(value);
 }
 
-async function checkBoundVariable(
-  variableAlias: { type: string; id: string },
-): Promise<boolean> {
+async function checkBoundVariable(variableAlias: {
+  type: string;
+  id: string;
+}): Promise<boolean> {
   const resolved = await figma.variables.getVariableByIdAsync(variableAlias.id);
   return resolved === null;
 }
@@ -210,9 +218,7 @@ async function scanStyleBoundVariables(
   }
 }
 
-async function isBindingValid(
-  binding: unknown,
-): Promise<boolean> {
+async function isBindingValid(binding: unknown): Promise<boolean> {
   if (!binding) return false;
 
   // TextStyle boundVariables are arrays: [{ type: "VARIABLE_ALIAS", variableId: "..." }]
@@ -253,8 +259,13 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
           unbound.push({
             styleName: style.name,
             styleType: "PAINT",
-            property: style.paints.length > 1 ? "color (paint " + i + ")" : "color",
-            currentValue: "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0"),
+            property:
+              style.paints.length > 1 ? "color (paint " + i + ")" : "color",
+            currentValue:
+              "#" +
+              r.toString(16).padStart(2, "0") +
+              g.toString(16).padStart(2, "0") +
+              b.toString(16).padStart(2, "0"),
           });
         }
       }
@@ -263,12 +274,22 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
 
   // Text styles — check all bindable properties
   const textStyles = await figma.getLocalTextStylesAsync();
-  const textProps: Array<{ key: string; label: string; format: (style: TextStyle) => string }> = [
-    { key: "fontSize", label: "fontSize", format: function(s) { return s.fontSize + "px"; } },
+  const textProps: Array<{
+    key: string;
+    label: string;
+    format: (style: TextStyle) => string;
+  }> = [
+    {
+      key: "fontSize",
+      label: "fontSize",
+      format: function (s) {
+        return s.fontSize + "px";
+      },
+    },
     {
       key: "lineHeight",
       label: "lineHeight",
-      format: function(s) {
+      format: function (s) {
         var lh = s.lineHeight as any;
         if (lh.unit === "AUTO") return "AUTO";
         return lh.unit === "PERCENT" ? lh.value + "%" : lh.value + "px";
@@ -277,7 +298,7 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
     {
       key: "letterSpacing",
       label: "letterSpacing",
-      format: function(s) {
+      format: function (s) {
         var ls = s.letterSpacing as any;
         return ls.unit === "PERCENT" ? ls.value + "%" : ls.value + "px";
       },
@@ -285,17 +306,23 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
     {
       key: "paragraphSpacing",
       label: "paragraphSpacing",
-      format: function(s) { return s.paragraphSpacing + "px"; },
+      format: function (s) {
+        return s.paragraphSpacing + "px";
+      },
     },
     {
       key: "fontFamily",
       label: "fontFamily",
-      format: function(s) { return s.fontName.family; },
+      format: function (s) {
+        return s.fontName.family;
+      },
     },
     {
       key: "fontStyle",
       label: "fontStyle",
-      format: function(s) { return s.fontName.style; },
+      format: function (s) {
+        return s.fontName.style;
+      },
     },
   ];
 
@@ -332,11 +359,19 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
             styleName: style.name,
             styleType: "EFFECT",
             property: prefix + "color",
-            currentValue: "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0"),
+            currentValue:
+              "#" +
+              r.toString(16).padStart(2, "0") +
+              g.toString(16).padStart(2, "0") +
+              b.toString(16).padStart(2, "0"),
           });
         }
       }
-      if ("radius" in effect && (effect as any).radius !== 0 && !(await isBindingValid(bound.radius))) {
+      if (
+        "radius" in effect &&
+        (effect as any).radius !== 0 &&
+        !(await isBindingValid(bound.radius))
+      ) {
         unbound.push({
           styleName: style.name,
           styleType: "EFFECT",
@@ -344,7 +379,11 @@ async function scanUnboundStyleProperties(): Promise<UnboundStyleProperty[]> {
           currentValue: (effect as any).radius + "px",
         });
       }
-      if ("spread" in effect && (effect as any).spread !== 0 && !(await isBindingValid(bound.spread))) {
+      if (
+        "spread" in effect &&
+        (effect as any).spread !== 0 &&
+        !(await isBindingValid(bound.spread))
+      ) {
         unbound.push({
           styleName: style.name,
           styleType: "EFFECT",
@@ -386,7 +425,8 @@ function countBoundVariables(
             layerName: node.name,
             layerPath: path,
             property: "fill",
-            value: `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase(),
+            value:
+              `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase(),
           });
         }
       }
@@ -410,7 +450,8 @@ function countBoundVariables(
             layerName: node.name,
             layerPath: path,
             property: "stroke",
-            value: `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase(),
+            value:
+              `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase(),
           });
         }
       }
@@ -436,14 +477,25 @@ function countBoundVariables(
 
   // Check spacing properties (padding, gap, border radius, etc.)
   const spacingProps = [
-    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
-    "itemSpacing", "counterAxisSpacing",
-    "topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "itemSpacing",
+    "counterAxisSpacing",
+    "topLeftRadius",
+    "topRightRadius",
+    "bottomLeftRadius",
+    "bottomRightRadius",
     "strokeWeight",
   ] as const;
 
   for (const prop of spacingProps) {
-    if (prop in node && typeof (node as any)[prop] === "number" && (node as any)[prop] !== 0) {
+    if (
+      prop in node &&
+      typeof (node as any)[prop] === "number" &&
+      (node as any)[prop] !== 0
+    ) {
       total++;
       if (bv[prop]) {
         bound++;
@@ -478,7 +530,11 @@ function scanNodeRecursive(
   if ("children" in node) {
     for (const child of (node as ChildrenMixin).children) {
       const childPath = path + " / " + child.name;
-      const childCounts = scanNodeRecursive(child as SceneNode, rawValues, childPath);
+      const childCounts = scanNodeRecursive(
+        child as SceneNode,
+        rawValues,
+        childPath,
+      );
       total += childCounts.total;
       bound += childCounts.bound;
     }
@@ -500,7 +556,11 @@ async function loadComponentData(): Promise<SerializedComponent[]> {
     for (const node of components) {
       // Skip standalone components that are children of a component set
       // (they're variants — the set itself covers them)
-      if (node.type === "COMPONENT" && node.parent && node.parent.type === "COMPONENT_SET") {
+      if (
+        node.type === "COMPONENT" &&
+        node.parent &&
+        node.parent.type === "COMPONENT_SET"
+      ) {
         continue;
       }
 
@@ -519,7 +579,7 @@ async function loadComponentData(): Promise<SerializedComponent[]> {
             options: (def as any).variantOptions || [],
           };
           const opts = (def as any).variantOptions;
-          variantCount += (opts && opts.length) ? opts.length : 0;
+          variantCount += opts && opts.length ? opts.length : 0;
         }
       }
 
@@ -531,12 +591,20 @@ async function loadComponentData(): Promise<SerializedComponent[]> {
       if (isSet) {
         // Scan each variant child
         for (const child of (compNode as ComponentSetNode).children) {
-          const counts = scanNodeRecursive(child as SceneNode, rawValues, compNode.name + " / " + child.name);
+          const counts = scanNodeRecursive(
+            child as SceneNode,
+            rawValues,
+            compNode.name + " / " + child.name,
+          );
           totalProps += counts.total;
           boundProps += counts.bound;
         }
       } else {
-        const counts = scanNodeRecursive(compNode as SceneNode, rawValues, compNode.name);
+        const counts = scanNodeRecursive(
+          compNode as SceneNode,
+          rawValues,
+          compNode.name,
+        );
         totalProps += counts.total;
         boundProps += counts.bound;
       }
@@ -601,7 +669,9 @@ async function loadVariableData(): Promise<void> {
           (value as unknown as { type: string }).type === "VARIABLE_ALIAS"
         ) {
           const alias = value as unknown as { type: string; id: string };
-          const referencedVar = await figma.variables.getVariableByIdAsync(alias.id);
+          const referencedVar = await figma.variables.getVariableByIdAsync(
+            alias.id,
+          );
           if (referencedVar) {
             aliasId = referencedVar.name;
           } else {
@@ -654,47 +724,85 @@ figma.ui.onmessage = async (msg: {
   targetCollectionId?: string;
   variableIds?: string[];
   variableId?: string;
+  customPrompts?: Record<string, string>;
 }) => {
   if (msg.type === "rename-variable" && msg.id && msg.newName) {
     try {
       const variable = await figma.variables.getVariableByIdAsync(msg.id);
       if (!variable) {
-        figma.ui.postMessage({ type: "rename-error", id: msg.id, error: "Variable not found" });
+        figma.ui.postMessage({
+          type: "rename-error",
+          id: msg.id,
+          error: "Variable not found",
+        });
         return;
       }
       variable.name = msg.newName;
-      figma.ui.postMessage({ type: "rename-success", id: msg.id, newName: msg.newName });
+      figma.ui.postMessage({
+        type: "rename-success",
+        id: msg.id,
+        newName: msg.newName,
+      });
       figma.notify(`Renamed to "${msg.newName}"`, { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "rename-error", id: msg.id, error: message });
+      figma.ui.postMessage({
+        type: "rename-error",
+        id: msg.id,
+        error: message,
+      });
       figma.notify(`Rename failed: ${message}`, { error: true, timeout: 2500 });
     }
   }
 
   if (msg.type === "rename-collection" && msg.collectionId && msg.newName) {
     try {
-      const collections = await figma.variables.getLocalVariableCollectionsAsync();
-      const collection = collections.find(c => c.id === msg.collectionId);
+      const collections =
+        await figma.variables.getLocalVariableCollectionsAsync();
+      const collection = collections.find((c) => c.id === msg.collectionId);
       if (!collection) {
-        figma.ui.postMessage({ type: "fix-error", action: "rename-collection", error: "Collection not found" });
+        figma.ui.postMessage({
+          type: "fix-error",
+          action: "rename-collection",
+          error: "Collection not found",
+        });
         return;
       }
       collection.name = msg.newName;
-      figma.ui.postMessage({ type: "fix-success", action: "rename-collection", collectionId: msg.collectionId, newName: msg.newName });
+      figma.ui.postMessage({
+        type: "fix-success",
+        action: "rename-collection",
+        collectionId: msg.collectionId,
+        newName: msg.newName,
+      });
       figma.notify(`Renamed collection to "${msg.newName}"`, { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "fix-error", action: "rename-collection", error: message });
+      figma.ui.postMessage({
+        type: "fix-error",
+        action: "rename-collection",
+        error: message,
+      });
     }
   }
 
-  if (msg.type === "move-variables" && msg.variableIds && msg.targetCollectionId) {
+  if (
+    msg.type === "move-variables" &&
+    msg.variableIds &&
+    msg.targetCollectionId
+  ) {
     try {
-      const collections = await figma.variables.getLocalVariableCollectionsAsync();
-      const targetCollection = collections.find(c => c.id === msg.targetCollectionId);
+      const collections =
+        await figma.variables.getLocalVariableCollectionsAsync();
+      const targetCollection = collections.find(
+        (c) => c.id === msg.targetCollectionId,
+      );
       if (!targetCollection) {
-        figma.ui.postMessage({ type: "fix-error", action: "move-variables", error: "Target collection not found" });
+        figma.ui.postMessage({
+          type: "fix-error",
+          action: "move-variables",
+          error: "Target collection not found",
+        });
         return;
       }
       let moved = 0;
@@ -702,10 +810,16 @@ figma.ui.onmessage = async (msg: {
         const variable = await figma.variables.getVariableByIdAsync(varId);
         if (!variable) continue;
 
-        const sourceCollection = collections.find(c => c.variableIds.includes(varId));
+        const sourceCollection = collections.find((c) =>
+          c.variableIds.includes(varId),
+        );
         if (!sourceCollection) continue;
 
-        const newVar = figma.variables.createVariable(variable.name, targetCollection, variable.resolvedType);
+        const newVar = figma.variables.createVariable(
+          variable.name,
+          targetCollection,
+          variable.resolvedType,
+        );
         for (const mode of targetCollection.modes) {
           const sourceMode = sourceCollection.modes[0];
           if (sourceMode) {
@@ -719,56 +833,101 @@ figma.ui.onmessage = async (msg: {
         moved++;
       }
 
-      figma.ui.postMessage({ type: "fix-success", action: "move-variables", moved });
+      figma.ui.postMessage({
+        type: "fix-success",
+        action: "move-variables",
+        moved,
+      });
       figma.notify(`Moved ${moved} variables`, { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "fix-error", action: "move-variables", error: message });
+      figma.ui.postMessage({
+        type: "fix-error",
+        action: "move-variables",
+        error: message,
+      });
     }
   }
 
   if (msg.type === "create-collection" && msg.name) {
     try {
       const collection = figma.variables.createVariableCollection(msg.name);
-      figma.ui.postMessage({ type: "fix-success", action: "create-collection", collectionId: collection.id, name: msg.name });
+      figma.ui.postMessage({
+        type: "fix-success",
+        action: "create-collection",
+        collectionId: collection.id,
+        name: msg.name,
+      });
       figma.notify(`Created collection "${msg.name}"`, { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "fix-error", action: "create-collection", error: message });
+      figma.ui.postMessage({
+        type: "fix-error",
+        action: "create-collection",
+        error: message,
+      });
     }
   }
 
   if (msg.type === "delete-collection" && msg.collectionId) {
     try {
-      const collections = await figma.variables.getLocalVariableCollectionsAsync();
-      const collection = collections.find(c => c.id === msg.collectionId);
+      const collections =
+        await figma.variables.getLocalVariableCollectionsAsync();
+      const collection = collections.find((c) => c.id === msg.collectionId);
       if (!collection) {
-        figma.ui.postMessage({ type: "fix-error", action: "delete-collection", error: "Collection not found" });
+        figma.ui.postMessage({
+          type: "fix-error",
+          action: "delete-collection",
+          error: "Collection not found",
+        });
         return;
       }
       collection.remove();
-      figma.ui.postMessage({ type: "fix-success", action: "delete-collection", collectionId: msg.collectionId });
+      figma.ui.postMessage({
+        type: "fix-success",
+        action: "delete-collection",
+        collectionId: msg.collectionId,
+      });
       figma.notify("Deleted collection", { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "fix-error", action: "delete-collection", error: message });
+      figma.ui.postMessage({
+        type: "fix-error",
+        action: "delete-collection",
+        error: message,
+      });
     }
   }
 
   if (msg.type === "delete-variable" && msg.variableId) {
     try {
-      const variable = await figma.variables.getVariableByIdAsync(msg.variableId);
+      const variable = await figma.variables.getVariableByIdAsync(
+        msg.variableId,
+      );
       if (!variable) {
-        figma.ui.postMessage({ type: "fix-error", action: "delete-variable", error: "Variable not found" });
+        figma.ui.postMessage({
+          type: "fix-error",
+          action: "delete-variable",
+          error: "Variable not found",
+        });
         return;
       }
       const name = variable.name;
       variable.remove();
-      figma.ui.postMessage({ type: "fix-success", action: "delete-variable", variableId: msg.variableId, name });
+      figma.ui.postMessage({
+        type: "fix-success",
+        action: "delete-variable",
+        variableId: msg.variableId,
+        name,
+      });
       figma.notify(`Deleted variable "${name}"`, { timeout: 2000 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({ type: "fix-error", action: "delete-variable", error: message });
+      figma.ui.postMessage({
+        type: "fix-error",
+        action: "delete-variable",
+        error: message,
+      });
     }
   }
 
@@ -795,13 +954,27 @@ figma.ui.onmessage = async (msg: {
     figma.ui.postMessage({ type: "auth-ready", token: msg.token });
   }
 
-
   if (msg.type === "registration-failed") {
-    figma.notify("Registration failed: " + (msg.message || "Unknown error"), { error: true, timeout: 2500 });
+    figma.notify("Registration failed: " + (msg.message || "Unknown error"), {
+      error: true,
+      timeout: 2500,
+    });
   }
 
   if (msg.type === "notify" && msg.message) {
     figma.notify(msg.message, { error: !!msg.error, timeout: 2500 });
+  }
+
+  if (msg.type === "save-custom-prompts" && msg.customPrompts !== undefined) {
+    figma.root.setPluginData("customPrompts", JSON.stringify(msg.customPrompts));
+    figma.ui.postMessage({ type: "custom-prompts-saved" });
+  }
+
+  if (msg.type === "get-custom-prompts") {
+    const raw = figma.root.getPluginData("customPrompts");
+    let prompts: Record<string, string> = {};
+    try { prompts = raw ? JSON.parse(raw) : {}; } catch (_) {}
+    figma.ui.postMessage({ type: "custom-prompts", data: prompts });
   }
 };
 
@@ -820,7 +993,9 @@ async function loadAndSendComponentData(): Promise<void> {
 
 async function initPlugin(): Promise<void> {
   // Auth: check for existing token or trigger registration
-  const existingToken = await figma.clientStorage.getAsync("api_token") as string | undefined;
+  const existingToken = (await figma.clientStorage.getAsync("api_token")) as
+    | string
+    | undefined;
   if (existingToken) {
     figma.ui.postMessage({ type: "auth-ready", token: existingToken });
   } else {
@@ -838,4 +1013,10 @@ async function initPlugin(): Promise<void> {
   await loadVariableData();
   await loadStyleData();
   await loadAndSendComponentData();
+
+  // Send file-level custom prompts to UI
+  const rawPrompts = figma.root.getPluginData("customPrompts");
+  let customPrompts: Record<string, string> = {};
+  try { customPrompts = rawPrompts ? JSON.parse(rawPrompts) : {}; } catch (_) {}
+  figma.ui.postMessage({ type: "custom-prompts", data: customPrompts });
 }
