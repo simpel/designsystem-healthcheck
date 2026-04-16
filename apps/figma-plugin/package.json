@@ -1,0 +1,21 @@
+{
+  "name": "figma-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json && NODE_ENV=production node build-ui.mjs",
+    "build:ui": "node build-ui.mjs",
+    "dev": "node build-ui.mjs && (node watch-ui.mjs & tsc -p tsconfig.json --watch)",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@figma/eslint-plugin-figma-plugins": "*",
+    "@figma/plugin-typings": "*",
+    "dotenv": "^16.6.1",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
+  }
+}

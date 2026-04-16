@@ -1,0 +1,25 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": ["code.js", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "test": {},
+    "deploy": {
+      "dependsOn": ["build"]
+    },
+    "db:generate": {},
+    "db:push": {},
+    "db:migrate:local": {},
+    "db:migrate:remote": {},
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

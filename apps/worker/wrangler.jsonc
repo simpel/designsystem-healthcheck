@@ -1,0 +1,17 @@
+{
+  "name": "designsystem-healthcheck-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "dev": {
+    "port": 8787
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "designsystem-healthcheck-db",
+      "database_id": "6c3530c6-ccb8-4ad2-8f9d-f16609657d47",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

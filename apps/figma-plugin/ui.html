@@ -1,0 +1,1823 @@
+<style>
+  :root {
+    --text-primary: #1A1A1A;
+    --text-secondary: #767676;
+    --error: #CC0000;
+    --warning: #B8860B;
+    --note: #0066CC;
+    --success: #1A7A1A;
+    --broken: #9333EA;
+    --running: #B8860B;
+    --border: rgba(0,0,0,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text-primary: #E8E8E8;
+      --text-secondary: #767676;
+      --warning: #D4A843;
+      --note: #5599DD;
+      --broken: #A855F7;
+      --border: rgba(255,255,255,0.1);
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    color: var(--text-primary);
+    padding: 16px;
+    line-height: 1.4;
+  }
+
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+  }
+
+  .section-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    padding: 12px 0 4px 0;
+  }
+
+  .summary { padding-bottom: 12px; font-size: 12px; }
+  .summary.pulsating { animation: pulse 1s infinite; }
+
+  button.primary-btn {
+    width: 100%;
+    padding: 8px 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-primary);
+    margin-top: 8px;
+  }
+
+  button.primary-btn:disabled { cursor: default; opacity: 0.6; }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .btn-row button {
+    flex: 1;
+    padding: 8px 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .btn-row button:disabled { cursor: default; opacity: 0.6; }
+
+  .progress-area { margin-top: 12px; }
+
+  .progress-slot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+
+  .progress-slot .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .progress-slot.streaming .dot { background: var(--running); animation: pulse 1s infinite; }
+  .progress-slot.done .dot { background: var(--success); }
+  .progress-slot.error .dot { background: var(--error); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .progress-slot .label { color: var(--text-secondary); }
+  .progress-slot.streaming .label { color: var(--running); animation: pulse 1s infinite; }
+  .progress-slot.done .label { color: var(--text-primary); }
+  .progress-slot.error .label { color: var(--error); }
+
+  .progress-slot .error-detail {
+    font-size: 10px;
+    color: var(--error);
+    padding: 2px 0 2px 14px;
+    display: none;
+  }
+
+  .progress-slot.error .error-detail { display: block; }
+
+  .progress-bar-track {
+    height: 3px;
+    background: var(--border);
+    margin-top: 12px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--running);
+    width: 0%;
+    transition: width 0.4s ease, background 0.3s ease;
+  }
+
+  .progress-bar-fill.complete { background: var(--success); }
+  .progress-bar-fill.has-errors { background: var(--error); }
+
+  .violation-row {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .violation-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .violation-name {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    word-break: break-all;
+  }
+
+  .violation-name.fixed {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+  }
+
+  .fix-btn {
+    background: none;
+    border: none;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .fix-btn:hover { color: var(--text-primary); }
+
+  .violation-rule { color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+
+  .violation-explanation {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .violation-suggestion {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .option-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 4px 0;
+  }
+
+  .option-row + .option-row {
+    border-top: 1px solid var(--border);
+  }
+
+  .option-name {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .option-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--text-primary); font-weight: 600; }
+  .tab-btn.active[data-tab="error"] { border-bottom-color: var(--error); }
+  .tab-btn.active[data-tab="warning"] { border-bottom-color: var(--warning); }
+  .tab-btn.active[data-tab="note"] { border-bottom-color: var(--note); }
+  .tab-btn.active[data-tab="passed"] { border-bottom-color: var(--success); }
+  .tab-btn.active[data-tab="broken"] { border-bottom-color: var(--broken); }
+
+  .tab-count {
+    display: inline-block;
+    min-width: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 8px;
+    margin-left: 4px;
+  }
+
+  [data-tab="error"] .tab-count { background: var(--error); color: #fff; }
+  [data-tab="warning"] .tab-count { background: var(--warning); color: #fff; }
+  [data-tab="note"] .tab-count { background: var(--note); color: #fff; }
+  [data-tab="passed"] .tab-count { background: var(--success); color: #fff; }
+  [data-tab="broken"] .tab-count { background: var(--broken); color: #fff; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .start-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+  .start-tab {
+    padding: 8px 12px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .start-tab:hover { color: var(--text-primary); }
+  .start-tab.active { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--text-primary); }
+  .start-panel { display: none; padding-top: 12px; }
+  .start-panel.active { display: block; }
+
+  .guide-section { margin-bottom: 16px; }
+  .guide-section h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+  }
+  .guide-section p {
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .guide-layer {
+    background: rgba(0,0,0,0.03);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .guide-layer { background: rgba(255,255,255,0.04); }
+  }
+  .guide-layer-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+  .guide-layer-desc { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
+  .guide-example {
+    font-family: "SF Mono", SFMono-Regular, Menlo, monospace;
+    font-size: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    line-height: 1.5;
+    white-space: pre;
+  }
+  .guide-good {
+    background: rgba(26,122,26,0.08);
+    border-left: 2px solid var(--success);
+    color: var(--success);
+  }
+  .guide-bad {
+    background: rgba(204,0,0,0.06);
+    border-left: 2px solid var(--error);
+    color: var(--error);
+  }
+  .guide-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .guide-label-good { color: var(--success); }
+  .guide-label-bad { color: var(--error); }
+
+  .level-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+    position: relative;
+    top: -1px;
+  }
+
+  .level-dot.error { background: var(--error); }
+  .level-dot.warning { background: var(--warning); }
+  .level-dot.note { background: var(--note); }
+
+  .passed-row {
+    padding: 4px 0;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+  }
+
+  .passed-row:first-child { border-top: none; }
+
+  .broken-row {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .broken-name {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    word-break: break-all;
+  }
+
+  .broken-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .broken-alias {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    color: var(--broken);
+    margin-top: 2px;
+    word-break: break-all;
+  }
+
+  .pass { text-align: center; padding-top: 40px; }
+  .pass-title { color: var(--success); font-size: 12px; }
+  .pass-sub { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
+
+  .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .accordion-header .chevron {
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+  }
+
+  .accordion-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  .accordion-body {
+    overflow: hidden;
+    max-height: 2000px;
+    transition: max-height 0.3s ease;
+  }
+
+  .accordion-body.collapsed {
+    max-height: 0;
+  }
+
+  .arch-failure { margin-top: 8px; }
+  .arch-issue { color: var(--error); font-size: 11px; padding: 2px 0; }
+
+  .fix-row {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fix-description { font-size: 11px; flex: 1; }
+  .fix-row .fix-btn { flex-shrink: 0; }
+</style>
+
+<div id="app">
+  <div id="registering-view" style="display:none">
+    <div class="summary">Registering...</div>
+  </div>
+  <div id="default-view">
+    <div class="start-tabs">
+      <button class="start-tab active" data-start-tab="audit">Audit</button>
+      <button class="start-tab" data-start-tab="guide">Guide</button>
+    </div>
+
+    <div class="start-panel active" id="start-audit">
+      <div class="summary" id="inventory">Loading variables...</div>
+      <button class="primary-btn" id="run-btn" disabled>Run audit</button>
+    </div>
+
+    <div class="start-panel" id="start-guide">
+      <div class="guide-section">
+        <h3>The 3-layer model</h3>
+        <p>A healthy design system separates raw values from meaning from usage. Each layer references the one below it &mdash; never the other way around.</p>
+
+        <div class="guide-layer">
+          <div class="guide-layer-name">1. Primitives</div>
+          <div class="guide-layer-desc">The full palette. Raw color, spacing, and type values. Named by what they are, not what they do.</div>
+        </div>
+        <div class="guide-layer">
+          <div class="guide-layer-name">2. Themes</div>
+          <div class="guide-layer-desc">Semantic aliases that point to primitives. Named by intent &mdash; they enable light/dark mode and brand theming.</div>
+        </div>
+        <div class="guide-layer">
+          <div class="guide-layer-name">3. Components</div>
+          <div class="guide-layer-desc">Component-scoped tokens that reference theme tokens. Tightly bound to a specific UI element.</div>
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <h3>Color naming</h3>
+        <div class="guide-label guide-label-good">Good</div>
+        <div class="guide-example guide-good">primitives/blue-500
+themes/color/bg/primary
+components/button/bg/default</div>
+        <div class="guide-label guide-label-bad">Bad</div>
+        <div class="guide-example guide-bad">blue               (no layer, ambiguous scope)
+primary-bg          (flat &mdash; mixes intent with layer)
+button-color        (no hierarchy, unclear property)</div>
+      </div>
+
+      <div class="guide-section">
+        <h3>Spacing &amp; sizing</h3>
+        <div class="guide-label guide-label-good">Good</div>
+        <div class="guide-example guide-good">primitives/spacing/400
+themes/spacing/element/gap
+components/card/padding</div>
+        <div class="guide-label guide-label-bad">Bad</div>
+        <div class="guide-example guide-bad">16px               (raw value, no token)
+spacing-medium      (flat, not layered)
+card-gap            (no clear layer or hierarchy)</div>
+      </div>
+
+      <div class="guide-section">
+        <h3>Why it matters</h3>
+        <p><strong>Without layers</strong> &mdash; theme changes require touching hundreds of components. Renaming a color breaks everything. Dark mode is manual.</p>
+        <p><strong>With layers</strong> &mdash; swap a theme and every component updates. Primitives are stable. Components are self-contained and portable.</p>
+      </div>
+    </div>
+  </div>
+  <div id="progress-view" style="display:none">
+    <div class="summary" id="progress-summary">Running audit...</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar"></div></div>
+    <div class="progress-area" id="progress-slots"></div>
+  </div>
+  <div id="arch-failure-view" style="display:none"></div>
+  <div id="fix-view" style="display:none"></div>
+  <div id="results-view" style="display:none"></div>
+</div>
+
+<script>
+  // ─── Configuration ────────────────────────────────────────────────
+  var WORKER_URL = "http://localhost:8787";
+  var MODEL      = "claude-sonnet-4-5";
+  var MODEL_FAST = "claude-haiku-4-5";
+  // ─────────────────────────────────────────────────────────────────
+
+  var variableData = null;
+  var componentData = null;
+  var brokenReferences = [];
+  var apiToken = null;
+
+  var registeringView = document.getElementById("registering-view");
+  var inventoryEl = document.getElementById("inventory");
+  var runBtn = document.getElementById("run-btn");
+  var defaultView = document.getElementById("default-view");
+  var progressView = document.getElementById("progress-view");
+  var progressSummary = document.getElementById("progress-summary");
+  var progressSlots = document.getElementById("progress-slots");
+  var archFailureView = document.getElementById("arch-failure-view");
+  var fixView = document.getElementById("fix-view");
+  var resultsView = document.getElementById("results-view");
+  var progressBar = document.getElementById("progress-bar");
+
+  var agentProgress = { total: 0, done: 0, errors: 0 };
+
+  // Start-page tab switching
+  (function() {
+    var tabs = document.querySelectorAll(".start-tab");
+    var panels = { audit: document.getElementById("start-audit"), guide: document.getElementById("start-guide") };
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].addEventListener("click", function() {
+        var target = this.getAttribute("data-start-tab");
+        for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove("active");
+        this.classList.add("active");
+        panels.audit.classList.remove("active");
+        panels.guide.classList.remove("active");
+        panels[target].classList.add("active");
+      });
+    }
+  })();
+
+  function updateInventoryDisplay() {
+    var parts = [];
+    if (variableData) {
+      var totalVars = variableData.collections.reduce(function(sum, c) { return sum + c.variables.length; }, 0);
+      parts.push(variableData.collections.length + " collections \u00b7 " + totalVars + " variables");
+    }
+    if (componentData) {
+      parts.push(componentData.length + " components");
+    }
+    if (brokenReferences.length > 0) {
+      parts.push(brokenReferences.length + " broken");
+    }
+    inventoryEl.textContent = parts.join(" \u00b7 ") || "Loading...";
+    runBtn.disabled = !variableData;
+  }
+
+  function generateId() {
+    var arr = new Uint8Array(16);
+    (crypto || window.crypto).getRandomValues(arr);
+    arr[6] = (arr[6] & 0x0f) | 0x40;
+    arr[8] = (arr[8] & 0x3f) | 0x80;
+    var hex = Array.from(arr, function(b) { return b.toString(16).padStart(2, "0"); }).join("");
+    return hex.slice(0,8)+"-"+hex.slice(8,12)+"-"+hex.slice(12,16)+"-"+hex.slice(16,20)+"-"+hex.slice(20);
+  }
+
+  function updateProgressBar() {
+    if (agentProgress.total === 0) return;
+    var pct = Math.round((agentProgress.done / agentProgress.total) * 100);
+    progressBar.style.width = pct + "%";
+    progressBar.classList.remove("complete", "has-errors");
+    if (agentProgress.done === agentProgress.total) {
+      progressBar.classList.add(agentProgress.errors > 0 ? "has-errors" : "complete");
+      progressSummary.classList.remove("pulsating");
+    }
+    progressSummary.textContent = "Auditing collections \u2014 " + agentProgress.done + "/" + agentProgress.total + " complete";
+  }
+
+  function showView(view) {
+    [defaultView, progressView, archFailureView, fixView, resultsView, registeringView].forEach(function(v) {
+      v.style.display = "none";
+    });
+    view.style.display = "block";
+  }
+
+  // ─── Receive messages from code.js ────────────────────────────────
+  window.onmessage = function(event) {
+    var msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === "auth-ready") {
+      apiToken = msg.token;
+      showView(defaultView);
+    }
+
+    if (msg.type === "register-user") {
+      showView(registeringView);
+      registerUser(msg.figmaUserId, msg.figmaUserName);
+    }
+
+    if (msg.type === "variable-data") {
+      variableData = msg.data;
+      brokenReferences = msg.data.brokenReferences || [];
+      updateInventoryDisplay();
+    }
+
+    if (msg.type === "component-data") {
+      componentData = msg.data;
+      updateInventoryDisplay();
+    }
+
+    if (msg.type === "rename-success") {
+      var nameEl = document.querySelector("[data-var-id=\"" + msg.id + "\"] .violation-name");
+      if (nameEl) { nameEl.classList.add("fixed"); nameEl.textContent = msg.newName; }
+      var allBtns = document.querySelectorAll("[data-var-id=\"" + msg.id + "\"] .fix-btn");
+      for (var bi = 0; bi < allBtns.length; bi++) { allBtns[bi].textContent = "Fixed"; allBtns[bi].disabled = true; }
+    }
+
+    if (msg.type === "rename-error") {
+      var errBtns = document.querySelectorAll("[data-var-id=\"" + msg.id + "\"] .fix-btn");
+      for (var ei = 0; ei < errBtns.length; ei++) {
+        if (errBtns[ei].textContent === "Fixing\u2026") errBtns[ei].textContent = "Error";
+      }
+    }
+
+    if (msg.type === "fix-success") {
+      var fixEl = document.querySelector("[data-fix-action=\"" + msg.action + "\"]");
+      if (fixEl) {
+        var b = fixEl.querySelector(".fix-btn");
+        if (b) { b.textContent = "Done"; b.disabled = true; }
+      }
+    }
+
+    if (msg.type === "fix-error") {
+      var fixEl2 = document.querySelector("[data-fix-action=\"" + msg.action + "\"]");
+      if (fixEl2) {
+        var b2 = fixEl2.querySelector(".fix-btn");
+        if (b2) b2.textContent = "Error";
+      }
+    }
+  };
+
+  // ─── Orchestrator: architecture validation ────────────────────────
+  function validateArchitecture(collections) {
+    var expected = ["primitives", "themes", "components"];
+    var names = collections.map(function(c) { return c.name.toLowerCase(); });
+    var issues = [];
+
+    for (var i = 0; i < expected.length; i++) {
+      if (names.indexOf(expected[i]) === -1) {
+        var closeMatch = collections.find(function(c) {
+          return c.name.toLowerCase() === expected[i] && c.name !== expected[i];
+        });
+        if (closeMatch) {
+          issues.push("Collection \"" + closeMatch.name + "\" should be lowercase: \"" + expected[i] + "\"");
+        } else {
+          issues.push("Missing collection: \"" + expected[i] + "\"");
+        }
+      }
+    }
+
+    for (var j = 0; j < names.length; j++) {
+      if (expected.indexOf(names[j]) === -1) {
+        issues.push("Unexpected collection: \"" + collections[j].name + "\"");
+      }
+    }
+
+    return issues;
+  }
+
+  // ─── Orchestrator: compute reference maps ─────────────────────────
+  function computeReferenceMaps(collections) {
+    var byName = {};
+    for (var i = 0; i < collections.length; i++) {
+      byName[collections[i].name.toLowerCase()] = collections[i];
+    }
+
+    var primitiveNames = [];
+    var themeNames = [];
+    if (byName.primitives) {
+      primitiveNames = byName.primitives.variables.map(function(v) { return v.name; });
+    }
+    if (byName.themes) {
+      themeNames = byName.themes.variables.map(function(v) { return v.name; });
+    }
+
+    var referencedPrimitives = {};
+    var referencedThemes = {};
+
+    if (byName.themes) {
+      for (var t = 0; t < byName.themes.variables.length; t++) {
+        var tv = byName.themes.variables[t];
+        var modes = Object.keys(tv.valuesByMode);
+        for (var m = 0; m < modes.length; m++) {
+          var alias = tv.valuesByMode[modes[m]].aliasId;
+          if (alias) referencedPrimitives[alias] = true;
+        }
+      }
+    }
+
+    if (byName.components) {
+      for (var c = 0; c < byName.components.variables.length; c++) {
+        var cv = byName.components.variables[c];
+        var cmodes = Object.keys(cv.valuesByMode);
+        for (var cm = 0; cm < cmodes.length; cm++) {
+          var calias = cv.valuesByMode[cmodes[cm]].aliasId;
+          if (calias) referencedThemes[calias] = true;
+        }
+      }
+    }
+
+    var unreferencedPrimitives = primitiveNames.filter(function(n) { return !referencedPrimitives[n]; });
+    var unreferencedThemes = themeNames.filter(function(n) { return !referencedThemes[n]; });
+
+    return {
+      primitiveNames: primitiveNames,
+      themeNames: themeNames,
+      unreferencedPrimitives: unreferencedPrimitives,
+      unreferencedThemes: unreferencedThemes,
+    };
+  }
+
+  // ─── Deterministic violation extraction ────────────────────────────
+  function extractDeterministicViolations(collections, refs) {
+    var violations = [];
+    var byName = {};
+    for (var i = 0; i < collections.length; i++) {
+      byName[collections[i].name.toLowerCase()] = collections[i];
+    }
+
+    // Primitives: aliasing is always an error, unused is a warning
+    var primFiltered = [];
+    if (byName.primitives) {
+      for (var p = 0; p < byName.primitives.variables.length; p++) {
+        var pv = byName.primitives.variables[p];
+        var pmodes = Object.keys(pv.valuesByMode);
+        var hasAlias = pmodes.some(function(m) { return pv.valuesByMode[m].aliasId !== null; });
+
+        if (hasAlias) {
+          violations.push({
+            collection: "primitives", variable_id: pv.id, variable: pv.name,
+            level: "error", rule: "Aliasing in primitives",
+            explanation: pv.name + " aliases another variable. Primitives must store raw hardcoded values only.",
+            options: [{ name: "", description: "Remove the alias and set a hardcoded raw value" }],
+          });
+        } else if (refs.unreferencedPrimitives.indexOf(pv.name) !== -1) {
+          violations.push({
+            collection: "primitives", variable_id: pv.id, variable: pv.name,
+            level: "warning", rule: "Unused variable",
+            explanation: pv.name + " is not referenced by any theme variable.",
+            options: [{ name: "", description: "Remove this variable if it is no longer needed" }],
+          });
+        } else {
+          primFiltered.push(pv);
+        }
+      }
+    }
+
+    // Themes: hardcoded values and invalid alias targets
+    var themeFiltered = [];
+    if (byName.themes) {
+      for (var t = 0; t < byName.themes.variables.length; t++) {
+        var tv = byName.themes.variables[t];
+        var tmodes = Object.keys(tv.valuesByMode);
+        var allHardcoded = tmodes.every(function(m) { return tv.valuesByMode[m].aliasId === null; });
+        var hasBadAlias = false;
+        if (!allHardcoded) {
+          for (var tm = 0; tm < tmodes.length; tm++) {
+            var tid = tv.valuesByMode[tmodes[tm]].aliasId;
+            if (tid !== null && refs.primitiveNames.indexOf(tid) === -1) {
+              hasBadAlias = true;
+              break;
+            }
+          }
+        }
+
+        if (allHardcoded) {
+          violations.push({
+            collection: "themes", variable_id: tv.id, variable: tv.name,
+            level: "error", rule: "Hardcoded value in theme",
+            explanation: tv.name + " has hardcoded values in all modes. Theme variables must alias a primitive.",
+            options: [{ name: "", description: "Replace with an alias to a primitive variable" }],
+          });
+        } else if (hasBadAlias) {
+          violations.push({
+            collection: "themes", variable_id: tv.id, variable: tv.name,
+            level: "error", rule: "Invalid alias target",
+            explanation: tv.name + " aliases a variable not in the primitives collection.",
+            options: [{ name: "", description: "Update the alias to point to a valid primitive variable" }],
+          });
+        } else if (refs.unreferencedThemes.indexOf(tv.name) !== -1) {
+          violations.push({
+            collection: "themes", variable_id: tv.id, variable: tv.name,
+            level: "warning", rule: "Unused variable",
+            explanation: tv.name + " is not referenced by any component variable.",
+            options: [{ name: "", description: "Remove this variable if it is no longer needed" }],
+          });
+        } else {
+          themeFiltered.push(tv);
+        }
+      }
+    }
+
+    // Components: hardcoded values and invalid alias targets
+    var compFiltered = [];
+    if (byName.components) {
+      for (var c = 0; c < byName.components.variables.length; c++) {
+        var cv = byName.components.variables[c];
+        var cmodes = Object.keys(cv.valuesByMode);
+        var compAllHardcoded = cmodes.every(function(m) { return cv.valuesByMode[m].aliasId === null; });
+        var compBadAlias = false;
+        if (!compAllHardcoded) {
+          for (var cm = 0; cm < cmodes.length; cm++) {
+            var cid = cv.valuesByMode[cmodes[cm]].aliasId;
+            if (cid !== null && refs.themeNames.indexOf(cid) === -1) {
+              compBadAlias = true;
+              break;
+            }
+          }
+        }
+
+        if (compAllHardcoded) {
+          violations.push({
+            collection: "components", variable_id: cv.id, variable: cv.name,
+            level: "error", rule: "Hardcoded value in component",
+            explanation: cv.name + " has hardcoded values in all modes. Component variables must alias a theme variable.",
+            options: [{ name: "", description: "Replace with an alias to a theme variable" }],
+          });
+        } else if (compBadAlias) {
+          violations.push({
+            collection: "components", variable_id: cv.id, variable: cv.name,
+            level: "error", rule: "Invalid alias target",
+            explanation: cv.name + " does not alias a valid theme variable.",
+            options: [{ name: "", description: "Update the alias to point to a valid theme variable" }],
+          });
+        } else {
+          compFiltered.push(cv);
+        }
+      }
+    }
+
+    return {
+      violations: violations,
+      filteredCollections: {
+        primitives: byName.primitives ? Object.assign({}, byName.primitives, { variables: primFiltered }) : null,
+        themes: byName.themes ? Object.assign({}, byName.themes, { variables: themeFiltered }) : null,
+        components: byName.components ? Object.assign({}, byName.components, { variables: compFiltered }) : null,
+      },
+    };
+  }
+
+  // ─── SSE stream reader ────────────────────────────────────────────
+  async function readSSEStream(response, onProgress) {
+    var reader = response.body.getReader();
+    var decoder = new TextDecoder();
+    var text = "";
+    var buffer = "";
+
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+
+      buffer += decoder.decode(result.value, { stream: true });
+
+      // Process complete lines only
+      var lineEnd = buffer.lastIndexOf("\n");
+      if (lineEnd === -1) continue;
+      var complete = buffer.slice(0, lineEnd);
+      buffer = buffer.slice(lineEnd + 1);
+
+      var lines = complete.split("\n");
+      for (var i = 0; i < lines.length; i++) {
+        if (!lines[i].startsWith("data: ")) continue;
+        var data = lines[i].slice(6);
+        if (data === "[DONE]") continue;
+        try {
+          var event = JSON.parse(data);
+          if (event.type === "content_block_delta" && event.delta && event.delta.text) {
+            text += event.delta.text;
+            if (typeof onProgress === "function") {
+              onProgress(text);
+            }
+          }
+          if (event.type === "error" || event.error) {
+            throw new Error(typeof event.error === "string" ? event.error : JSON.stringify(event.error || event));
+          }
+        } catch (e) {
+          // Only swallow JSON parse errors from incomplete chunks
+          if (e instanceof SyntaxError) continue;
+          throw e;
+        }
+      }
+    }
+
+    if (!text) {
+      throw new Error("Empty response from API");
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("[readSSEStream] Failed to parse accumulated text:", text.slice(0, 500));
+      throw new Error("Invalid JSON in API response");
+    }
+  }
+
+  // ─── Run audit ────────────────────────────────────────────────────
+  runBtn.addEventListener("click", async function() {
+    if (!variableData || !apiToken) return;
+    runBtn.disabled = true;
+
+    // Set up progress view with all steps visible
+    showView(progressView);
+    progressBar.style.width = "0%";
+    progressBar.classList.remove("complete", "has-errors");
+    progressSummary.classList.add("pulsating");
+    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
+    var hasComponents = componentData && componentData.length > 0;
+    var totalSteps = hasComponents ? 5 : 4;
+    agentProgress = { total: totalSteps, done: 0, errors: 0 };
+
+    var archSlot = createProgressSlot("Validating architecture");
+    var primSlot = createProgressSlot("Auditing primitives");
+    var themeSlot = createProgressSlot("Auditing themes");
+    var compSlot = createProgressSlot("Auditing components");
+    var healthSlot = hasComponents ? createProgressSlot("Auditing component health") : null;
+
+    progressSummary.textContent = "Running audit \u2014 0/" + totalSteps + " complete";
+    archSlot.el.classList.add("streaming");
+
+    // Small delay so the user sees the step
+    await new Promise(function(r) { setTimeout(r, 300); });
+
+    var archIssues = validateArchitecture(variableData.collections);
+
+    if (archIssues.length > 0) {
+      archSlot.el.classList.remove("streaming");
+      archSlot.el.classList.add("error");
+      archSlot.label.textContent = "Architecture invalid \u2014 " + archIssues.length + " issues";
+      agentProgress.done++;
+      agentProgress.errors++;
+      updateProgressBar();
+      progressSummary.classList.remove("pulsating");
+      await new Promise(function(r) { setTimeout(r, 500); });
+      showArchitectureFailure(archIssues);
+      return;
+    }
+
+    archSlot.el.classList.remove("streaming");
+    archSlot.el.classList.add("done");
+    archSlot.label.textContent = "Architecture valid";
+    agentProgress.done++;
+    updateProgressBar();
+
+    await runParallelAudit({ primSlot: primSlot, themeSlot: themeSlot, compSlot: compSlot, healthSlot: healthSlot });
+  });
+
+  // ─── Architecture failure UI ──────────────────────────────────────
+  function showArchitectureFailure(issues) {
+    showView(archFailureView);
+    while (archFailureView.firstChild) archFailureView.removeChild(archFailureView.firstChild);
+
+    var title = document.createElement("div");
+    title.className = "summary";
+    var titleSpan = document.createElement("span");
+    titleSpan.style.color = "var(--error)";
+    titleSpan.textContent = "Architecture check failed";
+    title.appendChild(titleSpan);
+    archFailureView.appendChild(title);
+
+    var issueList = document.createElement("div");
+    issueList.className = "arch-failure";
+    for (var i = 0; i < issues.length; i++) {
+      var issueEl = document.createElement("div");
+      issueEl.className = "arch-issue";
+      issueEl.textContent = issues[i];
+      issueList.appendChild(issueEl);
+    }
+    archFailureView.appendChild(issueList);
+
+    var btnRow = document.createElement("div");
+    btnRow.className = "btn-row";
+
+    var fixBtn = document.createElement("button");
+    fixBtn.textContent = "Fix it";
+    fixBtn.addEventListener("click", function() { runFixAgent(); });
+
+    var genericBtn = document.createElement("button");
+    genericBtn.textContent = "Run generic check";
+    genericBtn.addEventListener("click", function() { runGenericAudit(); });
+
+    btnRow.appendChild(fixBtn);
+    btnRow.appendChild(genericBtn);
+    archFailureView.appendChild(btnRow);
+  }
+
+  // ─── Fix agent ────────────────────────────────────────────────────
+  async function runFixAgent() {
+    showView(progressView);
+    progressSummary.textContent = "Analyzing architecture issues...";
+    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
+
+    var slot = createProgressSlot("Architecture fix");
+    slot.el.classList.add("streaming");
+
+    try {
+      var structure = variableData.collections.map(function(c) {
+        return {
+          id: c.id || c.name,
+          name: c.name,
+          modes: c.modes,
+          variableCount: c.variables.length,
+          variables: c.variables.map(function(v) {
+            return { id: v.id, name: v.name, type: v.type };
+          }),
+        };
+      });
+
+      var resp = await fetch(WORKER_URL + "/audit/fix", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiToken,
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          collectionStructure: structure,
+          auditGroupId: generateId(),
+        }),
+      });
+
+      if (!resp.ok) {
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        throw { reason: "HTTP " + resp.status, detail: errBody.slice(0, 200) };
+      }
+
+      var result = await readSSEStream(resp);
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("done");
+      slot.label.textContent = "Architecture fix \u2014 " + result.fixes.length + " suggestions";
+
+      renderFixes(result.fixes);
+    } catch (err) {
+      var reason = err.reason || (err.message === "Failed to fetch" ? "Connection failed" : err.message || "Unknown error");
+      var detail = err.detail || (err.message === "Failed to fetch" ? "Could not reach the worker at " + WORKER_URL : "");
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("error");
+      slot.label.textContent = "Architecture fix \u2014 " + reason;
+      if (detail) slot.errorDetail.textContent = detail;
+    }
+  }
+
+  // ─── Render fixes ─────────────────────────────────────────────────
+  function renderFixes(fixes) {
+    showView(fixView);
+    while (fixView.firstChild) fixView.removeChild(fixView.firstChild);
+
+    var title = document.createElement("div");
+    title.className = "summary";
+    title.textContent = fixes.length + " suggested fixes";
+    fixView.appendChild(title);
+
+    for (var i = 0; i < fixes.length; i++) {
+      (function(fix, index) {
+        var row = document.createElement("div");
+        row.className = "fix-row";
+        row.setAttribute("data-fix-action", fix.action + "-" + index);
+
+        var desc = document.createElement("div");
+        desc.className = "fix-description";
+        desc.textContent = fix.description;
+
+        var btn = document.createElement("button");
+        btn.className = "fix-btn";
+        btn.textContent = "Fix";
+        btn.addEventListener("click", function() {
+          btn.textContent = "Fixing\u2026";
+          btn.disabled = true;
+
+          var message = { type: fix.action };
+          if (fix.params) {
+            var keys = Object.keys(fix.params);
+            for (var k = 0; k < keys.length; k++) {
+              message[keys[k]] = fix.params[keys[k]];
+            }
+          }
+          parent.postMessage({ pluginMessage: message }, "*");
+        });
+
+        row.appendChild(desc);
+        row.appendChild(btn);
+        fixView.appendChild(row);
+      })(fixes[i], i);
+    }
+
+    addRerunButton(fixView);
+  }
+
+  // ─── Generic audit ────────────────────────────────────────────────
+  async function runGenericAudit() {
+    showView(progressView);
+    progressSummary.textContent = "Running generic audit...";
+    while (progressSlots.firstChild) progressSlots.removeChild(progressSlots.firstChild);
+
+    var slot = createProgressSlot("Full audit");
+    slot.el.classList.add("streaming");
+
+    try {
+      var totalVars = variableData.collections.reduce(function(s, c) { return s + c.variables.length; }, 0);
+
+      var resp = await fetch(WORKER_URL + "/audit/generic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiToken,
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          variableData: variableData,
+          auditGroupId: generateId(),
+          variablesCount: totalVars,
+        }),
+      });
+
+      if (!resp.ok) {
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        throw { reason: "HTTP " + resp.status, detail: errBody.slice(0, 200) };
+      }
+
+      var result = await readSSEStream(resp);
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("done");
+      slot.label.textContent = "Full audit \u2014 " + result.summary.total_violations + " violations";
+
+      renderResults(result);
+    } catch (err) {
+      var reason = err.reason || (err.message === "Failed to fetch" ? "Connection failed" : err.message || "Unknown error");
+      var detail = err.detail || (err.message === "Failed to fetch" ? "Could not reach the worker at " + WORKER_URL : "");
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("error");
+      slot.label.textContent = "Full audit \u2014 " + reason;
+      if (detail) slot.errorDetail.textContent = detail;
+    }
+  }
+
+  // ─── Parallel collection audit ────────────────────────────────────
+  async function runParallelAudit(preSlots) {
+    var refs = computeReferenceMaps(variableData.collections);
+
+    // Pre-filter deterministic violations client-side
+    var preFilter = extractDeterministicViolations(variableData.collections, refs);
+    var clientViolations = preFilter.violations;
+    var filtered = preFilter.filteredCollections;
+
+    // True total from original data (before filtering)
+    var originalTotalVars = variableData.collections.reduce(function(s, c) { return s + c.variables.length; }, 0);
+
+    var auditGroupId = generateId();
+    var allViolations = [];
+    var allPassed = [];
+
+    var agents = [
+      {
+        name: "primitives",
+        route: "/audit/primitives",
+        model: MODEL_FAST,
+        collection: filtered.primitives,
+        referenceNames: [],
+        unreferencedNames: [],
+        slot: preSlots.primSlot,
+      },
+      {
+        name: "themes",
+        route: "/audit/themes",
+        model: MODEL_FAST,
+        collection: filtered.themes,
+        referenceNames: refs.primitiveNames,
+        unreferencedNames: [],
+        slot: preSlots.themeSlot,
+      },
+      {
+        name: "components",
+        route: "/audit/components",
+        model: MODEL_FAST,
+        collection: filtered.components,
+        referenceNames: refs.themeNames,
+        unreferencedNames: [],
+        slot: preSlots.compSlot,
+      },
+    ];
+
+    // Activate all agent slots
+    for (var a = 0; a < agents.length; a++) {
+      agents[a].slot.el.classList.add("streaming");
+    }
+
+    var promises = agents.map(function(agent) {
+      return runSingleAgent(agent, auditGroupId, agent.slot);
+    });
+
+    // Run component health audit in parallel if we have component data
+    var healthPromise = null;
+    if (componentData && componentData.length > 0 && preSlots.healthSlot) {
+      preSlots.healthSlot.el.classList.add("streaming");
+      healthPromise = runComponentHealthAgent(auditGroupId, preSlots.healthSlot);
+    }
+
+    var results = await Promise.allSettled(promises);
+
+    for (var r = 0; r < results.length; r++) {
+      if (results[r].status === "fulfilled" && results[r].value) {
+        var res = results[r].value;
+        allViolations = allViolations.concat(res.violations);
+        if (res.passed) allPassed = allPassed.concat(res.passed);
+      }
+    }
+
+    // Merge component health results
+    if (healthPromise) {
+      var healthResult = await healthPromise;
+      if (healthResult) {
+        originalTotalVars += healthResult.summary.total_variables;
+        allViolations = allViolations.concat(healthResult.violations);
+        if (healthResult.passed) allPassed = allPassed.concat(healthResult.passed);
+      }
+    }
+
+    // Prepend client-side deterministic violations
+    allViolations = clientViolations.concat(allViolations);
+
+    renderResults({
+      summary: { total_variables: originalTotalVars, total_violations: allViolations.length },
+      violations: allViolations,
+      passed: allPassed,
+    });
+  }
+
+  async function runSingleAgent(agent, auditGroupId, slot) {
+    slot.el.classList.add("streaming");
+    console.log("[audit] started:", agent.name);
+
+    try {
+      var resp = await fetch(WORKER_URL + agent.route, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiToken,
+        },
+        body: JSON.stringify({
+          model: agent.model,
+          collectionData: agent.collection,
+          referenceNames: agent.referenceNames,
+          unreferencedNames: agent.unreferencedNames,
+          auditGroupId: auditGroupId,
+          variablesCount: agent.collection.variables.length,
+        }),
+      });
+
+      if (!resp.ok) {
+        if (resp.status === 401) {
+          apiToken = null;
+          parent.postMessage({ pluginMessage: { type: "clear-token" } }, "*");
+          throw { reason: "Authentication failed", detail: "Your session has expired. Restart the plugin to re-authenticate." };
+        }
+        var errBody = "";
+        try { errBody = await resp.text(); } catch (_e) {}
+        var errMsg = "";
+        try {
+          var parsed = JSON.parse(errBody);
+          errMsg = parsed.error && parsed.error.message ? parsed.error.message : parsed.error || "";
+        } catch (_e2) {
+          errMsg = errBody.slice(0, 200);
+        }
+        if (resp.status === 429) {
+          throw { reason: "Rate limited", detail: "Too many requests. Wait a moment and try again." + (errMsg ? " (" + errMsg + ")" : "") };
+        }
+        if (resp.status === 413) {
+          throw { reason: "Payload too large", detail: "The " + agent.name + " collection has too many variables for a single request. Try reducing the collection size." };
+        }
+        if (resp.status >= 500) {
+          throw { reason: "Server error (" + resp.status + ")", detail: errMsg || "The API returned an internal error. Try again." };
+        }
+        throw { reason: "HTTP " + resp.status, detail: errMsg || "Unexpected error from the API." };
+      }
+
+      var lastCount = 0;
+      var result = await readSSEStream(resp, function(accText) {
+        var matches = accText.match(/"level"\s*:\s*"(?:error|warning|note)"/g);
+        var count = matches ? matches.length : 0;
+        if (count !== lastCount) {
+          lastCount = count;
+          var capName = agent.name.charAt(0).toUpperCase() + agent.name.slice(1);
+          slot.label.textContent = capName + " \u2014 " + count + " issue" + (count === 1 ? "" : "s") + " found\u2026";
+        }
+      });
+      console.log("[audit] done:", agent.name, result.summary);
+
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("done");
+      var count = result.summary.total_violations;
+      var capName = agent.name.charAt(0).toUpperCase() + agent.name.slice(1);
+      if (count === 0) {
+        slot.label.textContent = capName + " \u2014 all clear";
+      } else {
+        var ec = 0, wc = 0, nc = 0;
+        for (var vi = 0; vi < result.violations.length; vi++) {
+          var lv = result.violations[vi].level || "error";
+          if (lv === "error") ec++;
+          else if (lv === "warning") wc++;
+          else nc++;
+        }
+        var parts = [];
+        if (ec > 0) parts.push(ec + (ec === 1 ? " error" : " errors"));
+        if (wc > 0) parts.push(wc + (wc === 1 ? " warning" : " warnings"));
+        if (nc > 0) parts.push(nc + (nc === 1 ? " note" : " notes"));
+        slot.label.textContent = capName + " \u2014 " + parts.join(", ");
+      }
+      agentProgress.done++;
+      updateProgressBar();
+
+      return result;
+    } catch (err) {
+      console.error("[audit] failed:", agent.name, err);
+      var capName = agent.name.charAt(0).toUpperCase() + agent.name.slice(1);
+      var reason = err.reason || (err.message === "Failed to fetch" ? "Connection failed" : err.message || "Unknown error");
+      var detail = err.detail || (err.message === "Failed to fetch" ? "Could not reach the worker. Is it running on " + WORKER_URL + "?" : "");
+
+      slot.el.classList.remove("streaming");
+      slot.el.classList.add("error");
+      slot.label.textContent = capName + " \u2014 " + reason;
+      if (detail) slot.errorDetail.textContent = detail;
+      agentProgress.done++;
+      agentProgress.errors++;
+      updateProgressBar();
+      return null;
+    }
+  }
+
+  // ─── Component health agent ───────────────────────────────────────
+  async function runComponentHealthAgent(auditGroupId, slot) {
+    console.log("[audit] started: component-health");
+    try {
+      var resp = await fetch(WORKER_URL + "/audit/component-health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiToken },
+        body: JSON.stringify({ model: MODEL, componentData: componentData, auditGroupId: auditGroupId, componentCount: componentData.length }),
+      });
+      if (!resp.ok) {
+        if (resp.status === 401) { apiToken = null; parent.postMessage({ pluginMessage: { type: "clear-token" } }, "*"); throw { reason: "Authentication failed", detail: "Session expired. Restart plugin." }; }
+        var errBody = ""; try { errBody = await resp.text(); } catch (_e) {}
+        var errMsg = ""; try { var parsed = JSON.parse(errBody); errMsg = parsed.error && parsed.error.message ? parsed.error.message : parsed.error || ""; } catch (_e2) { errMsg = errBody.slice(0, 200); }
+        if (resp.status === 429) throw { reason: "Rate limited", detail: "Too many requests." + (errMsg ? " (" + errMsg + ")" : "") };
+        if (resp.status === 413) throw { reason: "Payload too large", detail: "Too many components for a single request." };
+        if (resp.status >= 500) throw { reason: "Server error (" + resp.status + ")", detail: errMsg || "Internal error. Try again." };
+        throw { reason: "HTTP " + resp.status, detail: errMsg || "Unexpected error." };
+      }
+      var lastCount = 0;
+      var result = await readSSEStream(resp, function(accText) {
+        var matches = accText.match(/"level"\s*:\s*"(?:error|warning|note)"/g);
+        var count = matches ? matches.length : 0;
+        if (count !== lastCount) {
+          lastCount = count;
+          slot.label.textContent = "Component health \u2014 " + count + " issue" + (count === 1 ? "" : "s") + " found\u2026";
+        }
+      });
+      console.log("[audit] done: component-health", result.summary);
+      slot.el.classList.remove("streaming"); slot.el.classList.add("done");
+      var count = result.summary.total_violations;
+      if (count === 0) { slot.label.textContent = "Component health \u2014 all clear"; }
+      else {
+        var ec = 0, wc = 0, nc = 0;
+        for (var vi = 0; vi < result.violations.length; vi++) { var lv = result.violations[vi].level || "error"; if (lv === "error") ec++; else if (lv === "warning") wc++; else nc++; }
+        var parts = [];
+        if (ec > 0) parts.push(ec + (ec === 1 ? " error" : " errors"));
+        if (wc > 0) parts.push(wc + (wc === 1 ? " warning" : " warnings"));
+        if (nc > 0) parts.push(nc + (nc === 1 ? " note" : " notes"));
+        slot.label.textContent = "Component health \u2014 " + parts.join(", ");
+      }
+      agentProgress.done++; updateProgressBar();
+      return result;
+    } catch (err) {
+      console.error("[audit] failed: component-health", err);
+      var reason = err.reason || (err.message === "Failed to fetch" ? "Connection failed" : err.message || "Unknown error");
+      var detail = err.detail || (err.message === "Failed to fetch" ? "Could not reach the worker at " + WORKER_URL : "");
+      slot.el.classList.remove("streaming"); slot.el.classList.add("error");
+      slot.label.textContent = "Component health \u2014 " + reason;
+      if (detail) slot.errorDetail.textContent = detail;
+      agentProgress.done++; agentProgress.errors++; updateProgressBar();
+      return null;
+    }
+  }
+
+  // ─── Progress slot helper ─────────────────────────────────────────
+  function createProgressSlot(name) {
+    var wrapper = document.createElement("div");
+
+    var el = document.createElement("div");
+    el.className = "progress-slot";
+
+    var dot = document.createElement("div");
+    dot.className = "dot";
+
+    var label = document.createElement("div");
+    label.className = "label";
+    label.textContent = name;
+
+    el.appendChild(dot);
+    el.appendChild(label);
+    wrapper.appendChild(el);
+
+    var errorDetail = document.createElement("div");
+    errorDetail.className = "error-detail";
+    wrapper.appendChild(errorDetail);
+
+    progressSlots.appendChild(wrapper);
+
+    return { el: el, label: label, errorDetail: errorDetail };
+  }
+
+  // ─── Render results ───────────────────────────────────────────────
+  function renderResults(result) {
+    showView(resultsView);
+    while (resultsView.firstChild) resultsView.removeChild(resultsView.firstChild);
+
+    var totalVars = result.summary.total_variables;
+    var totalViolations = result.summary.total_violations;
+    var passed = result.passed || [];
+
+    // Group violations by level
+    var byLevel = { error: [], warning: [], note: [] };
+    for (var v = 0; v < result.violations.length; v++) {
+      var level = result.violations[v].level || "error";
+      if (!byLevel[level]) byLevel[level] = [];
+      byLevel[level].push(result.violations[v]);
+    }
+
+    var errorCount = byLevel.error.length;
+    var warningCount = byLevel.warning.length;
+    var noteCount = byLevel.note.length;
+    var passedCount = passed.length;
+    var brokenCount = brokenReferences.length;
+
+    // Summary line
+    var summaryEl = document.createElement("div");
+    summaryEl.className = "summary";
+    var summaryColor = (brokenCount > 0 || errorCount > 0) ? "var(--error)" : warningCount > 0 ? "var(--warning)" : "var(--success)";
+    var summaryParts = [totalVars + " variables"];
+    if (totalViolations > 0) summaryParts.push(totalViolations + " issues");
+    if (brokenCount > 0) summaryParts.push(brokenCount + " broken");
+    var summarySpan = document.createElement("span");
+    summarySpan.style.color = summaryColor;
+    summarySpan.textContent = summaryParts.join(" \u00b7 ");
+    summaryEl.appendChild(summarySpan);
+    resultsView.appendChild(summaryEl);
+
+    // Tab bar
+    var tabBar = document.createElement("div");
+    tabBar.className = "tab-bar";
+
+    var tabs = [
+      { key: "broken", label: "Broken", count: brokenCount },
+      { key: "error", label: "Errors", count: errorCount },
+      { key: "warning", label: "Warnings", count: warningCount },
+      { key: "note", label: "Notes", count: noteCount },
+      { key: "passed", label: "Passed", count: passedCount },
+    ];
+
+    var panels = {};
+
+    for (var t = 0; t < tabs.length; t++) {
+      (function(tab) {
+        var btn = document.createElement("button");
+        btn.className = "tab-btn";
+        btn.setAttribute("data-tab", tab.key);
+        btn.textContent = tab.label;
+
+        if (tab.count > 0) {
+          var badge = document.createElement("span");
+          badge.className = "tab-count";
+          badge.textContent = String(tab.count);
+          btn.appendChild(badge);
+        }
+
+        btn.addEventListener("click", function() {
+          var allBtns = tabBar.querySelectorAll(".tab-btn");
+          for (var i = 0; i < allBtns.length; i++) allBtns[i].classList.remove("active");
+          btn.classList.add("active");
+
+          var keys = Object.keys(panels);
+          for (var i = 0; i < keys.length; i++) panels[keys[i]].classList.remove("active");
+          panels[tab.key].classList.add("active");
+        });
+
+        tabBar.appendChild(btn);
+
+        var panel = document.createElement("div");
+        panel.className = "tab-panel";
+        panels[tab.key] = panel;
+      })(tabs[t]);
+    }
+
+    resultsView.appendChild(tabBar);
+
+    // Render broken references panel
+    if (brokenCount > 0) {
+      renderBrokenPanel(panels.broken, brokenReferences);
+    } else {
+      var noBroken = document.createElement("div");
+      noBroken.className = "pass";
+      noBroken.style.paddingTop = "24px";
+      var noBrokenTitle = document.createElement("div");
+      noBrokenTitle.className = "pass-sub";
+      noBrokenTitle.textContent = "No broken references";
+      noBroken.appendChild(noBrokenTitle);
+      panels.broken.appendChild(noBroken);
+    }
+    resultsView.appendChild(panels.broken);
+
+    // Render violation panels (error, warning, note)
+    var levelKeys = ["error", "warning", "note"];
+    for (var l = 0; l < levelKeys.length; l++) {
+      var levelViolations = byLevel[levelKeys[l]];
+      if (levelViolations.length > 0) {
+        renderViolationsInPanel(panels[levelKeys[l]], levelViolations, levelKeys[l]);
+      } else {
+        var emptyMsg = document.createElement("div");
+        emptyMsg.className = "pass";
+        emptyMsg.style.paddingTop = "24px";
+        var emptyTitle = document.createElement("div");
+        emptyTitle.className = "pass-sub";
+        emptyTitle.textContent = "No " + levelKeys[l] + "s";
+        emptyMsg.appendChild(emptyTitle);
+        panels[levelKeys[l]].appendChild(emptyMsg);
+      }
+      resultsView.appendChild(panels[levelKeys[l]]);
+    }
+
+    // Render passed panel
+    if (passedCount > 0) {
+      renderPassedPanel(panels.passed, passed);
+    } else {
+      var noPassed = document.createElement("div");
+      noPassed.className = "pass";
+      noPassed.style.paddingTop = "24px";
+      var noPassedTitle = document.createElement("div");
+      noPassedTitle.className = "pass-sub";
+      noPassedTitle.textContent = "No passing variables";
+      noPassed.appendChild(noPassedTitle);
+      panels.passed.appendChild(noPassed);
+    }
+    resultsView.appendChild(panels.passed);
+
+    // Activate first tab that has items
+    var firstActive = brokenCount > 0 ? "broken" : errorCount > 0 ? "error" : warningCount > 0 ? "warning" : noteCount > 0 ? "note" : "passed";
+    var firstBtn = tabBar.querySelector("[data-tab=\"" + firstActive + "\"]");
+    if (firstBtn) firstBtn.click();
+
+    addRerunButton(resultsView);
+  }
+
+  function renderViolationsInPanel(panel, violations, level) {
+    // Group by collection
+    var groups = {};
+    for (var v = 0; v < violations.length; v++) {
+      var key = violations[v].collection.toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(violations[v]);
+    }
+
+    var sectionOrder = ["primitives", "themes", "components", "component-health"];
+    for (var s = 0; s < sectionOrder.length; s++) {
+      var section = sectionOrder[s];
+      if (groups[section] && groups[section].length > 0) {
+        renderSectionInPanel(panel, section.toUpperCase(), groups[section], level);
+      }
+    }
+
+    var groupKeys = Object.keys(groups);
+    for (var g = 0; g < groupKeys.length; g++) {
+      if (sectionOrder.indexOf(groupKeys[g]) === -1) {
+        renderSectionInPanel(panel, groupKeys[g].toUpperCase(), groups[groupKeys[g]], level);
+      }
+    }
+  }
+
+  function renderPassedPanel(panel, passed) {
+    // Group by collection
+    var groups = {};
+    for (var p = 0; p < passed.length; p++) {
+      var key = passed[p].collection.toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(passed[p]);
+    }
+
+    var sectionOrder = ["primitives", "themes", "components", "component-health"];
+    for (var s = 0; s < sectionOrder.length; s++) {
+      var section = sectionOrder[s];
+      if (groups[section] && groups[section].length > 0) {
+        var header = document.createElement("div");
+        header.className = "section-header";
+        header.textContent = section.toUpperCase() + " (" + groups[section].length + ")";
+        panel.appendChild(header);
+
+        for (var i = 0; i < groups[section].length; i++) {
+          var row = document.createElement("div");
+          row.className = "passed-row";
+          row.textContent = groups[section][i].variable;
+          panel.appendChild(row);
+        }
+      }
+    }
+  }
+
+  function renderBrokenPanel(panel, refs) {
+    // Group by collection
+    var groups = {};
+    for (var i = 0; i < refs.length; i++) {
+      var key = refs[i].collection.toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(refs[i]);
+    }
+
+    var sectionOrder = ["primitives", "themes", "components", "paint styles", "text styles", "effect styles", "grid styles"];
+    var allKeys = Object.keys(groups);
+    // Add any non-standard collections
+    for (var k = 0; k < allKeys.length; k++) {
+      if (sectionOrder.indexOf(allKeys[k]) === -1) sectionOrder.push(allKeys[k]);
+    }
+
+    for (var s = 0; s < sectionOrder.length; s++) {
+      var section = sectionOrder[s];
+      if (!groups[section] || groups[section].length === 0) continue;
+
+      var header = document.createElement("div");
+      header.className = "section-header";
+      header.textContent = section.toUpperCase() + " (" + groups[section].length + ")";
+      panel.appendChild(header);
+
+      for (var j = 0; j < groups[section].length; j++) {
+        var ref = groups[section][j];
+        var row = document.createElement("div");
+        row.className = "broken-row";
+
+        var name = document.createElement("div");
+        name.className = "broken-name";
+        name.textContent = ref.variableName;
+        row.appendChild(name);
+
+        var detail = document.createElement("div");
+        detail.className = "broken-detail";
+        if (ref.source === "style") {
+          detail.textContent = "Bound variable deleted on property \"" + ref.property + "\" (" + ref.mode + ")";
+        } else {
+          detail.textContent = "References a deleted variable in mode \"" + ref.mode + "\"";
+        }
+        row.appendChild(detail);
+
+        var alias = document.createElement("div");
+        alias.className = "broken-alias";
+        alias.textContent = ref.brokenAliasId;
+        row.appendChild(alias);
+
+        panel.appendChild(row);
+      }
+    }
+  }
+
+  function addRerunButton(container) {
+    var rerunBtn = document.createElement("button");
+    rerunBtn.className = "primary-btn";
+    rerunBtn.textContent = "Re-run audit";
+    rerunBtn.style.marginTop = "16px";
+    rerunBtn.addEventListener("click", function() {
+      parent.postMessage({ pluginMessage: { type: "reload-variables" } }, "*");
+      showView(defaultView);
+      runBtn.disabled = false;
+      runBtn.textContent = "Run audit";
+    });
+    container.appendChild(rerunBtn);
+  }
+
+  // ─── Registration ──────────────────────────────────────────────────
+  async function registerUser(figmaUserId, figmaUserName) {
+    try {
+      var resp = await fetch(WORKER_URL + "/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ figmaUserId: figmaUserId, figmaUserName: figmaUserName }),
+      });
+
+      if (!resp.ok) {
+        var errText = await resp.text();
+        throw new Error("HTTP " + resp.status + ": " + errText.slice(0, 200));
+      }
+
+      var data = await resp.json();
+      apiToken = data.token;
+      parent.postMessage({ pluginMessage: { type: "store-token", token: data.token } }, "*");
+      showView(defaultView);
+    } catch (err) {
+      parent.postMessage({ pluginMessage: { type: "registration-failed", message: err.message } }, "*");
+      showView(defaultView);
+      inventoryEl.textContent = "Registration failed. Restart the plugin.";
+    }
+  }
+
+  function renderSectionInPanel(panel, title, violations, level) {
+    var header = document.createElement("div");
+    header.className = "section-header accordion-header";
+
+    var headerText = document.createElement("span");
+    headerText.textContent = title + " (" + violations.length + ")";
+    header.appendChild(headerText);
+
+    var chevron = document.createElement("span");
+    chevron.className = "chevron";
+    chevron.textContent = "\u25BC";
+    header.appendChild(chevron);
+
+    panel.appendChild(header);
+
+    var body = document.createElement("div");
+    body.className = "accordion-body";
+
+    header.addEventListener("click", function() {
+      header.classList.toggle("collapsed");
+      body.classList.toggle("collapsed");
+    });
+
+    for (var i = 0; i < violations.length; i++) {
+      var v = violations[i];
+      var row = document.createElement("div");
+      row.className = "violation-row";
+      if (v.variable_id) row.setAttribute("data-var-id", v.variable_id);
+
+      var topLine = document.createElement("div");
+      topLine.className = "violation-top";
+
+      var nameEl = document.createElement("span");
+      nameEl.className = "violation-name";
+      nameEl.textContent = v.variable;
+
+      topLine.appendChild(nameEl);
+      row.appendChild(topLine);
+
+      var ruleEl = document.createElement("div");
+      ruleEl.className = "violation-rule";
+      ruleEl.textContent = v.rule;
+      row.appendChild(ruleEl);
+
+      var explEl = document.createElement("div");
+      explEl.className = "violation-explanation";
+      explEl.textContent = v.explanation;
+      row.appendChild(explEl);
+
+      var options = v.options || [];
+      for (var j = 0; j < options.length; j++) {
+        (function(opt, violation) {
+          var optRow = document.createElement("div");
+          optRow.className = "option-row";
+
+          if (opt.name) {
+            var optName = document.createElement("span");
+            optName.className = "option-name";
+            optName.textContent = opt.name;
+            optRow.appendChild(optName);
+          }
+
+          var optDesc = document.createElement("span");
+          optDesc.className = "option-desc";
+          optDesc.textContent = opt.description;
+          optRow.appendChild(optDesc);
+
+          var optBtn = document.createElement("button");
+          optBtn.className = "fix-btn";
+
+          if (violation.variable_id && opt.name) {
+            optBtn.textContent = "Fix";
+            optBtn.addEventListener("click", function() {
+              parent.postMessage({ pluginMessage: { type: "rename-variable", id: violation.variable_id, newName: opt.name } }, "*");
+              optBtn.textContent = "Fixing\u2026";
+              optBtn.disabled = true;
+            });
+          } else {
+            optBtn.textContent = "Copy";
+            optBtn.addEventListener("click", function() {
+              navigator.clipboard.writeText(opt.name || opt.description).then(function() {
+                optBtn.textContent = "Copied";
+                setTimeout(function() { optBtn.textContent = "Copy"; }, 2000);
+              });
+            });
+          }
+
+          optRow.appendChild(optBtn);
+          row.appendChild(optRow);
+        })(options[j], v);
+      }
+
+      body.appendChild(row);
+    }
+
+    panel.appendChild(body);
+  }
+
+  parent.postMessage({ pluginMessage: { type: "ui-ready" } }, "*");
+</script>

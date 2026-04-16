@@ -1,0 +1,220 @@
+{
+  "info": {
+    "name": "Designsystem Healthcheck API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8787"
+    },
+    {
+      "key": "prod_url",
+      "value": "https://designsystem-healthcheck-api.me-887.workers.dev"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"figmaUserId\": \"test-user-1\",\n  \"figmaUserName\": \"Test User\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/register",
+          "host": ["{{base_url}}"],
+          "path": ["register"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "  var json = pm.response.json();",
+              "  pm.collectionVariables.set('token', json.token);",
+              "  pm.test('Token received', function() {",
+              "    pm.expect(json.token).to.be.a('string');",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register (idempotent)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"figmaUserId\": \"test-user-1\",\n  \"figmaUserName\": \"Test User\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/register",
+          "host": ["{{base_url}}"],
+          "path": ["register"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns same token', function() {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.token).to.equal(pm.collectionVariables.get('token'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "X-Collections-Count",
+            "value": "1"
+          },
+          {
+            "key": "X-Variables-Count",
+            "value": "2"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are a test auditor. Return violations for any input.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Audit: {\\\"collections\\\":[{\\\"name\\\":\\\"primitives\\\",\\\"modes\\\":[\\\"default\\\"],\\\"variables\\\":[{\\\"id\\\":\\\"VariableID:1:1\\\",\\\"name\\\":\\\"color/blue/500\\\",\\\"type\\\":\\\"COLOR\\\",\\\"valuesByMode\\\":{\\\"default\\\":{\\\"aliasId\\\":null,\\\"value\\\":\\\"#3B82F6\\\"}}}]}]}\"\n    }\n  ],\n  \"output_config\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"required\": [\"summary\", \"violations\"],\n        \"properties\": {\n          \"summary\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\"total_variables\", \"total_violations\", \"collections_checked\"],\n            \"properties\": {\n              \"total_variables\": { \"type\": \"number\" },\n              \"total_violations\": { \"type\": \"number\" },\n              \"collections_checked\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } }\n            }\n          },\n          \"violations\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"required\": [\"collection\", \"variable_id\", \"variable\", \"rule\", \"explanation\", \"suggestion\"],\n              \"properties\": {\n                \"collection\": { \"type\": \"string\" },\n                \"variable_id\": { \"type\": \"string\" },\n                \"variable\": { \"type\": \"string\" },\n                \"rule\": { \"type\": \"string\" },\n                \"explanation\": { \"type\": \"string\" },\n                \"suggestion\": { \"type\": \"string\" }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/audit",
+          "host": ["{{base_url}}"],
+          "path": ["audit"]
+        }
+      }
+    },
+    {
+      "name": "Audit (no auth)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{base_url}}/audit",
+          "host": ["{{base_url}}"],
+          "path": ["audit"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401', function() {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit (bad token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid-token-12345"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{base_url}}/audit",
+          "host": ["{{base_url}}"],
+          "path": ["audit"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401', function() {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "404 unknown route",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/nonexistent",
+          "host": ["{{base_url}}"],
+          "path": ["nonexistent"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 404', function() {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

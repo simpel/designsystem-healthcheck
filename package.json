@@ -1,0 +1,20 @@
+{
+  "name": "designsystem-healthcheck",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "deploy": "turbo run deploy",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "db:migrate:local": "turbo run db:migrate:local",
+    "db:migrate:remote": "turbo run db:migrate:remote",
+    "db:studio": "turbo run db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  }
+}
