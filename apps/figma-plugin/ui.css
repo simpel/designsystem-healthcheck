@@ -487,3 +487,67 @@ button.secondary-btn:hover { color: var(--text-primary); }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* ─── Prompt editor ─────────────────────────────────────────────── */
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.editor-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--note);
+  font-size: 12px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.editor-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+.editor-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-reset {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.prompt-editor-textarea {
+  width: 100%;
+  height: 100%;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 10px;
+  border-radius: 4px;
+  display: block;
+}
+
+.editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+}
