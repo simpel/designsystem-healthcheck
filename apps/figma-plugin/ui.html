@@ -284,6 +284,10 @@ card-gap (no clear layer or hierarchy)</div>
     saveBtn.addEventListener("click", function () {
       var text = textarea.value.trim();
       if (!text) return;
+      if (text.length > 20000) {
+        alert("Prompt is too long (" + text.length + " characters). Maximum is 20,000 characters.");
+        return;
+      }
       customPrompts[entry.key] = text;
       parent.postMessage({ pluginMessage: { type: "save-custom-prompts", customPrompts: customPrompts } }, "*");
       showSettingsView();
