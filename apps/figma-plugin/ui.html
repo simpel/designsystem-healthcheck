@@ -204,6 +204,10 @@ card-gap (no clear layer or hierarchy)</div>
     }
 
     setSlots(null, list, null);
+    activeNav = "settings";
+    for (var j = 0; j < navBtns.length; j++) {
+      navBtns[j].classList.toggle("active", navBtns[j].getAttribute("data-nav") === "settings");
+    }
   }
 
   function updateInventoryDisplay() {
