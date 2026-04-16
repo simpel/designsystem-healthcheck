@@ -159,6 +159,11 @@ The fix LLM returns structured JSON mapping to Figma API actions:
       "action": "delete-collection",
       "description": "Remove extra collection 'brand-tokens'",
       "params": { "collectionId": "..." }
+    },
+    {
+      "action": "delete-variable",
+      "description": "Remove unused primitive 'color/old-brand/500'",
+      "params": { "variableId": "..." }
     }
   ]
 }
@@ -175,7 +180,21 @@ The LLM receives collection IDs and variable IDs so suggestions are directly act
 | `move-variables` | Move variables between collections |
 | `create-collection` | Create a new empty collection |
 | `delete-collection` | Delete a collection |
+| `delete-variable` | Remove an unused variable |
 | `reload-variables` | Re-run loadVariableData() and send fresh data to UI |
+
+## Unused Variable Detection
+
+The orchestrator builds a "referenced by" map before dispatching agents:
+- For each variable that has an `aliasId`, record that the target variable is referenced
+- Pass the unreferenced set to each agent as context
+
+Per-collection agents flag unused variables as violations:
+- **Primitives**: variables not aliased by any theme variable
+- **Themes**: variables not aliased by any component variable
+- **Components**: no upstream consumers to check (usage in frames is outside variable data scope)
+
+The fix agent also includes `delete-variable` actions for unused variables found during architecture analysis.
 
 ## Cross-Collection Context
 
@@ -183,6 +202,6 @@ Per-collection agents need reference data from sibling collections:
 
 - **Themes agent** receives: list of primitive variable names (to verify alias targets)
 - **Components agent** receives: list of theme variable names (to verify alias targets)
-- **Primitives agent** receives: no cross-references needed
+- **Primitives agent** receives: list of variables referenced by themes (to flag unreferenced primitives)
 
-This is just variable names, not full data, keeping payloads small.
+The orchestrator pre-computes all reference maps from the variable data before dispatching. This is just variable names/IDs, not full data, keeping payloads small.
