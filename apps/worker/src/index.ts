@@ -27,7 +27,7 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Audit-Group-Id",
+    "Content-Type, Authorization, X-Audit-Group-Id, X-Plugin-Secret",
 };
 
 function json(body: unknown, status = 200): Response {
@@ -96,6 +96,7 @@ interface AuditRequestBody {
   unreferencedNames?: string[];
   auditGroupId: string;
   variablesCount: number;
+  systemPrompt?: string;
 }
 
 function getGatewayUrl(env: Env): string {
@@ -136,7 +137,7 @@ async function handleCollectionAudit(
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt,
+    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : systemPrompt,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -174,7 +175,7 @@ async function handleComponentHealth(
   const authResult = await authenticate(request, env);
   if (authResult instanceof Response) return authResult;
 
-  let body: { model: string; componentData: unknown; auditGroupId: string; componentCount: number };
+  let body: { model: string; componentData: unknown; auditGroupId: string; componentCount: number; systemPrompt?: string };
   try {
     body = await request.json();
   } catch {
@@ -189,7 +190,7 @@ async function handleComponentHealth(
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt: COMPONENT_HEALTH_SYSTEM_PROMPT,
+    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : COMPONENT_HEALTH_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -222,7 +223,7 @@ async function handleFix(request: Request, env: Env, ctx: ExecutionContext): Pro
   const authResult = await authenticate(request, env);
   if (authResult instanceof Response) return authResult;
 
-  let body: { model: string; collectionStructure: unknown; auditGroupId: string };
+  let body: { model: string; collectionStructure: unknown; auditGroupId: string; systemPrompt?: string };
   try {
     body = await request.json();
   } catch {
@@ -237,7 +238,7 @@ async function handleFix(request: Request, env: Env, ctx: ExecutionContext): Pro
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 4096,
-    systemPrompt: FIX_SYSTEM_PROMPT,
+    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : FIX_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: FIX_SCHEMA,
     corsHeaders: CORS_HEADERS,
@@ -250,7 +251,7 @@ async function handleGeneric(request: Request, env: Env, ctx: ExecutionContext):
   const authResult = await authenticate(request, env);
   if (authResult instanceof Response) return authResult;
 
-  let body: { model: string; variableData: unknown; auditGroupId: string; variablesCount: number };
+  let body: { model: string; variableData: unknown; auditGroupId: string; variablesCount: number; systemPrompt?: string };
   try {
     body = await request.json();
   } catch {
@@ -265,7 +266,7 @@ async function handleGeneric(request: Request, env: Env, ctx: ExecutionContext):
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
     maxTokens: 8192,
-    systemPrompt: GENERIC_SYSTEM_PROMPT,
+    systemPrompt: (body.systemPrompt && body.systemPrompt.trim()) ? body.systemPrompt : GENERIC_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
     corsHeaders: CORS_HEADERS,
