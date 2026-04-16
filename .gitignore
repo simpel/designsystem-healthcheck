@@ -5,7 +5,12 @@ node_modules
 
 out/
 dist/
-dist/
 .env
 .dev.vars
 .wrangler
+
+# Turbo
+.turbo/
+
+# macOS
+.DS_Store

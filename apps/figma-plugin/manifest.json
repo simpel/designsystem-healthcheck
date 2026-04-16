@@ -13,11 +13,8 @@
   "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": [
-      "https://*.workers.dev"
+      "https://designsystem-healthcheck-api.me-887.workers.dev"
     ],
-    "reasoning": "The plugin sends variable data to a Cloudflare Worker API for AI-powered auditing.",
-    "devAllowedDomains": [
-      "http://localhost:8787"
-    ]
+    "reasoning": "The plugin sends variable data to a Cloudflare Worker API for AI-powered auditing."
   }
 }
