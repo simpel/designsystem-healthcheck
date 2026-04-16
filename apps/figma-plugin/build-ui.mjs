@@ -27,12 +27,12 @@ const template = readFileSync(resolve(__dirname, "ui.html"), "utf-8");
 const output = template
   .replace("/* __CSS__ */", css)
   .replace(
-    /const WORKER_URL\s*=\s*"[^"]*"/,
-    `const WORKER_URL = "${WORKER_URL}"`
+    /var WORKER_URL\s*=\s*"[^"]*"/,
+    `var WORKER_URL = "${WORKER_URL}"`
   )
   .replace(
-    /const MODEL\s*=\s*"[^"]*"/,
-    `const MODEL      = "${MODEL}"`
+    /var MODEL\s*=\s*"[^"]*"/,
+    `var MODEL = "${MODEL}"`
   );
 
 mkdirSync(resolve(__dirname, "dist"), { recursive: true });

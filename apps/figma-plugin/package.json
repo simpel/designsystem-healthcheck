@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && NODE_ENV=production node build-ui.mjs",
     "build:ui": "node build-ui.mjs",
+    "preflight": "grep -o 'WORKER_URL = \"[^\"]*\"' dist/ui.html || echo 'dist/ui.html not found — run pnpm build first'",
     "dev": "node build-ui.mjs && (node watch-ui.mjs & tsc -p tsconfig.json --watch)",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
