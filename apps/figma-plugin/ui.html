@@ -7,6 +7,7 @@
   <div id="nav">
     <button class="active" data-nav="audit">Audit</button>
     <button data-nav="guide">Guide</button>
+    <button data-nav="settings">Settings</button>
   </div>
   <div id="slot-middle">
     <div id="guide-content" style="display:none">
@@ -57,12 +58,13 @@ card-gap (no clear layer or hierarchy)</div>
   </div>
   <div id="slot-bottom">
     <button class="primary-btn" id="run-btn" disabled>Run audit</button>
+    <p id="version-label">v__VERSION__</p>
   </div>
 </div>
 
 <script>
   // ─── Configuration ────────────────────────────────────────────────
-  var WORKER_URL = "http://localhost:8787";
+  var WORKER_URL = "https://designsystem-healthcheck-api.me-887.workers.dev";
   var PLUGIN_SECRET = "1ed51296626dce242a4b6ea0f17e4b2e149e1577480fc34b8a5aaa97ce7210ee";
   var MODEL = "claude-sonnet-4-5";
   var MODEL_FAST = "claude-haiku-4-5";
@@ -73,6 +75,7 @@ card-gap (no clear layer or hierarchy)</div>
   var brokenReferences = [];
   var unboundStyles = [];
   var apiToken = null;
+  var customPrompts = {};
 
   var slotTop = document.getElementById("slot-top");
   var nav = document.getElementById("nav");
@@ -106,6 +109,11 @@ card-gap (no clear layer or hierarchy)</div>
         while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
         slotMiddle.appendChild(guideContent);
         guideContent.style.display = "";
+      } else if (target === "settings") {
+        // Save current audit content, show settings
+        auditMiddleContent = document.createDocumentFragment();
+        while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        showSettingsView();
       } else {
         // Restore audit content
         guideContent.style.display = "none";
@@ -124,6 +132,7 @@ card-gap (no clear layer or hierarchy)</div>
   // ─── Set slot content (for audit views) ─────────────────────────
   function setSlots(top, middle, bottom) {
     clearEl(slotTop);
+    slotTop.style.display = "none";
     clearEl(slotMiddle);
     clearEl(slotBottom);
     // Always keep guide in DOM (hidden)
@@ -146,6 +155,55 @@ card-gap (no clear layer or hierarchy)</div>
     inventoryEl.textContent = "Loading variables...";
     setSlots(inventoryEl, null, null);
     updateInventoryDisplay();
+  }
+
+  var PROMPT_LABELS = [
+    { key: "primitives",       label: "Primitives" },
+    { key: "themes",           label: "Themes" },
+    { key: "components",       label: "Components" },
+    { key: "component-health", label: "Component Health" },
+    { key: "generic",          label: "Generic (full audit)" },
+    { key: "fix",              label: "Architecture Fix" },
+  ];
+
+  function showSettingsView() {
+    slotTop.style.display = "none";
+    var list = document.createElement("div");
+    list.className = "prompt-list";
+
+    for (var i = 0; i < PROMPT_LABELS.length; i++) {
+      (function (entry) {
+        var row = document.createElement("div");
+        row.className = "prompt-row";
+
+        var nameEl = document.createElement("span");
+        nameEl.className = "prompt-row-name";
+        nameEl.textContent = entry.label;
+
+        var right = document.createElement("div");
+        right.className = "prompt-row-right";
+
+        if (customPrompts[entry.key]) {
+          var badge = document.createElement("span");
+          badge.className = "prompt-badge";
+          badge.textContent = "customized";
+          right.appendChild(badge);
+        }
+
+        var editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", function () {
+          showPromptEditor(entry);
+        });
+        right.appendChild(editBtn);
+
+        row.appendChild(nameEl);
+        row.appendChild(right);
+        list.appendChild(row);
+      })(PROMPT_LABELS[i]);
+    }
+
+    setSlots(null, list, null);
   }
 
   function updateInventoryDisplay() {
@@ -222,6 +280,10 @@ card-gap (no clear layer or hierarchy)</div>
     if (msg.type === "component-data") {
       componentData = msg.data;
       updateInventoryDisplay();
+    }
+
+    if (msg.type === "custom-prompts") {
+      customPrompts = msg.data || {};
     }
 
     if (msg.type === "rename-success") {

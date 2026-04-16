@@ -1,33 +1,38 @@
 :root {
   --text-primary: #1A1A1A;
-  --text-secondary: #767676;
-  --error: #CC0000;
-  --warning: #B8860B;
-  --note: #0066CC;
-  --success: #1A7A1A;
-  --broken: #9333EA;
-  --running: #B8860B;
+  --text-secondary: #666666;
+  --error: #B30000;
+  --warning: #7A5200;
+  --note: #005299;
+  --success: #196119;
+  --broken: #6B21B0;
+  --running: #7A5200;
   --border: rgba(0, 0, 0, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --text-primary: #E8E8E8;
-    --text-secondary: #767676;
+    --text-secondary: #A0A0A0;
+    --error: #FF6B6B;
     --warning: #D4A843;
     --note: #5599DD;
+    --success: #4CAF50;
     --broken: #A855F7;
+    --running: #D4A843;
     --border: rgba(255, 255, 255, 0.1);
   }
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html { font-size: 100%; }
+
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.5;
   height: 100vh;
   overflow: hidden;
 }
@@ -56,7 +61,7 @@ body {
   flex: 1;
   padding: 8px 12px;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   border: none;
@@ -71,19 +76,20 @@ body {
 
 #slot-middle { overflow-y: auto; min-height: 0; padding: 12px 16px 0; margin: 0 -16px; }
 #slot-bottom { padding-top: 8px; }
+#version-label { margin: 6px 0 0; text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
 
 /* ─── Guide ────────────────────────────────────────────────────── */
 
 .guide-section { margin-bottom: 16px; }
 .guide-section h3 {
-  font-size: 11px;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 6px;
   color: var(--text-secondary);
 }
-.guide-section p { font-size: 11px; line-height: 1.5; margin-bottom: 8px; }
+.guide-section p { font-size: 0.8125rem; line-height: 1.5; margin-bottom: 8px; }
 
 .guide-layer {
   background: rgba(0, 0, 0, 0.03);
@@ -96,41 +102,41 @@ body {
   .guide-layer { background: rgba(255, 255, 255, 0.04); }
 }
 
-.guide-layer-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
-.guide-layer-desc { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
+.guide-layer-name { font-size: 0.8125rem; font-weight: 700; margin-bottom: 2px; }
+.guide-layer-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
 
 .guide-example {
   font-family: "SF Mono", SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-size: 0.75rem;
   padding: 6px 8px;
   border-radius: 4px;
   margin-bottom: 4px;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
 
 .guide-good { background: rgba(26, 122, 26, 0.08); border-left: 2px solid var(--success); color: var(--success); }
 .guide-bad { background: rgba(204, 0, 0, 0.06); border-left: 2px solid var(--error); color: var(--error); }
-.guide-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.guide-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
 .guide-label-good { color: var(--success); }
 .guide-label-bad { color: var(--error); }
 
 /* ─── Shared ───────────────────────────────────────────────────── */
 
-.summary { padding-bottom: 12px; font-size: 12px; }
+.summary { padding-bottom: 12px; font-size: 0.8125rem; }
 .summary.pulsating { animation: pulse 1s infinite; }
 
 .mono {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
 }
 
 button.primary-btn {
   width: 100%;
   padding: 8px 0;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -146,7 +152,7 @@ button.primary-btn:disabled { cursor: default; opacity: 0.5; }
 button.secondary-btn {
   padding: 8px 12px;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
+  font-size: 0.8125rem;
   cursor: pointer;
   border: 1px solid var(--border);
   background: transparent;
@@ -160,7 +166,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
   flex: 1;
   padding: 8px 0;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
+  font-size: 0.8125rem;
   cursor: pointer;
   border: 1px solid var(--border);
   background: transparent;
@@ -172,7 +178,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 
 .progress-area { margin-top: 12px; }
 
-.progress-slot { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 11px; }
+.progress-slot { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.8125rem; }
 .progress-slot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
 .progress-slot.streaming .dot { background: var(--running); animation: pulse 1s infinite; }
 .progress-slot.done .dot { background: var(--success); }
@@ -188,7 +194,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 .progress-slot.done .label { color: var(--text-primary); }
 .progress-slot.error .label { color: var(--error); }
 
-.progress-slot .error-detail { font-size: 10px; color: var(--error); padding: 2px 0 2px 14px; display: none; }
+.progress-slot .error-detail { font-size: 0.75rem; color: var(--error); padding: 2px 0 2px 14px; display: none; }
 .progress-slot.error .error-detail { display: block; }
 
 .progress-bar-track { height: 3px; background: var(--border); margin-top: 12px; margin-bottom: 4px; overflow: hidden; }
@@ -210,7 +216,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
   flex: 1;
   padding: 8px 4px;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 0.8125rem;
   cursor: pointer;
   border: none;
   background: transparent;
@@ -231,7 +237,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
   display: inline-block;
   min-width: 16px;
   padding: 0 4px;
-  font-size: 10px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   border-radius: 8px;
@@ -250,7 +256,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 /* ─── Violations ───────────────────────────────────────────────── */
 
 .section-header {
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -270,7 +276,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 
 .violation-name {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
   font-weight: 600;
   word-break: break-all;
 }
@@ -278,12 +284,13 @@ button.secondary-btn:hover { color: var(--text-primary); }
 .violation-name.fixed { text-decoration: line-through; color: var(--text-secondary); }
 
 .fix-btn {
-  background: none;
-  border: 1px solid var(--border);
+  background: #0d99ff;
+  border: none;
   border-radius: 3px;
   font-family: system-ui, -apple-system, sans-serif;
-  font-size: 10px;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
   cursor: pointer;
   padding: 2px 7px;
   flex-shrink: 0;
@@ -291,13 +298,15 @@ button.secondary-btn:hover { color: var(--text-primary); }
   white-space: nowrap;
 }
 
-.fix-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.fix-btn:hover:not(:disabled) { background: #0a85e0; }
+.fix-btn:disabled { cursor: default; opacity: 0.5; }
 
-.violation-rule { color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+.violation-rule { color: var(--text-secondary); font-size: 0.8125rem; margin-top: 2px; }
 
 .violation-explanation {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
   margin-top: 2px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -307,7 +316,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 
 .violation-suggestion {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
   margin-top: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -316,7 +325,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 .options-area { margin-top: 6px; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
 
 .options-label {
-  font-size: 9px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -330,12 +339,12 @@ button.secondary-btn:hover { color: var(--text-primary); }
 
 .option-name {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
   font-weight: 600;
   flex-shrink: 0;
 }
 
-.option-desc { font-size: 11px; color: var(--text-secondary); flex: 1; min-width: 0; }
+.option-desc { font-size: 0.8125rem; color: var(--text-secondary); flex: 1; min-width: 0; }
 
 /* ─── Passed / Broken rows ─────────────────────────────────────── */
 
@@ -357,7 +366,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 .passed-row {
   padding: 4px 0;
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   border-top: 1px solid var(--border);
 }
@@ -368,16 +377,16 @@ button.secondary-btn:hover { color: var(--text-primary); }
 
 .broken-name {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-size: 0.8125rem;
   font-weight: 600;
   word-break: break-all;
 }
 
-.broken-detail { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.broken-detail { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 2px; }
 
 .broken-alias {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--broken);
   margin-top: 2px;
   word-break: break-all;
@@ -404,7 +413,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 }
 
 .accordion-header .chevron {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-secondary);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -425,7 +434,7 @@ button.secondary-btn:hover { color: var(--text-primary); }
 /* ─── Architecture failure / fixes ─────────────────────────────── */
 
 .arch-failure { margin-top: 8px; }
-.arch-issue { color: var(--error); font-size: 11px; padding: 2px 0; }
+.arch-issue { color: var(--error); font-size: 0.8125rem; padding: 2px 0; }
 
 .fix-row {
   padding: 8px 0;
@@ -436,9 +445,45 @@ button.secondary-btn:hover { color: var(--text-primary); }
   gap: 8px;
 }
 
-.fix-description { font-size: 11px; flex: 1; }
+.fix-description { font-size: 0.8125rem; flex: 1; }
 .fix-row .fix-btn { flex-shrink: 0; }
 
 .pass { text-align: center; padding-top: 40px; }
-.pass-title { color: var(--success); font-size: 12px; }
-.pass-sub { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
+.pass-title { color: var(--success); font-size: 0.8125rem; }
+.pass-sub { color: var(--text-secondary); font-size: 0.8125rem; margin-top: 4px; }
+
+/* ─── Settings / Prompt list ───────────────────────────────────── */
+
+.prompt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+}
+
+.prompt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prompt-row-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.prompt-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--note);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
