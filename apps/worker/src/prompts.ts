@@ -163,6 +163,38 @@ Rules:
 **Naming** (warning for inconsistencies):
 - Component names should be PascalCase or Title Case. Flag lowercase or kebab-case names.
 - Check for naming consistency across all components.
+
+**Variant property naming** (audit every key in variantProperties and its options array):
+
+Canonical property names and their allowed values:
+- state: default, hover, focus, active, disabled, pressed, error, loading, selected
+- variant: any value (component-specific — primary, secondary, ghost, etc.)
+- viewport: xs, sm, md, lg, xl, 2xl only
+- theme: light, dark, or custom brand names
+- size: xs, sm, md, lg, xl, 2xl
+- shape: rounded, square, pill, circle
+- orientation: horizontal, vertical
+- alignment: left, center, right, start, end
+- density: compact, comfortable, spacious
+- layout: stacked, inline, grid
+
+Component-specific descriptive names (e.g. "icon-position", "has-icon") are acceptable — do not flag them.
+
+Errors (level: "error"):
+- Default Figma names: any property named "Property 1", "Property 2", "Property N" etc.
+- Any property name or value containing uppercase letters or spaces
+- "mode" as a property name — must be "theme" instead
+- Generic non-descriptive names: "type" or "style"
+- A "viewport" property whose options include non-t-shirt-size values such as "mobile", "desktop", "tablet", "phone", "widescreen"
+
+Warnings (level: "warning"):
+- An unrecognized property name that is not obviously bad and not in the canonical list (it may be intentional, but deviates from convention)
+
+Notes (level: "note"):
+- Values that could be more conventional, e.g. "on"/"off" when "enabled"/"disabled" or "true"/"false" would be clearer
+
+For each violation use rule labels such as: "Default property name", "Uppercase in property name", "Uppercase in property value", "Spaces in property name", "Spaces in property value", "Use theme not mode", "Generic property name", "Wrong viewport values", "Unrecognized property name", "Unconventional property values".
+The options array should suggest the corrected property name or value; use an empty string for non-rename fixes.
 ${SEVERITY_LEVELS}
 
 Use the component node ID as the variable_id field. Use "component-health" as the collection.
