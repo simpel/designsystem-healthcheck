@@ -203,7 +203,7 @@ Notes (level: "note"):
 Precedence: if a property name matches an error rule, report only the error — do not also emit the unrecognized-name warning for the same name.
 
 For each violation use rule labels such as: "Default property name", "Uppercase in property name", "Uppercase in property value", "Spaces in property name", "Spaces in property value", "Use theme not mode", "Generic property name", "Wrong viewport values", "Unrecognized property name", "Unexpected value for [property]", "Unconventional property values", "Consider lowercase".
-The options array should suggest the corrected property name or value; use an empty string for non-rename fixes. For a lowercase rename, provide the corrected name directly — e.g. for a property named "State", use `{ "name": "state", "description": "Lowercase property name" }`; for a value "Default", use `{ "name": "default", "description": "Lowercase property value" }`. For an unrecognized name where no obvious correction exists, use `{ "name": "", "description": "Review property name against canonical list" }`.
+The options array should suggest the corrected property name or value; use an empty string for non-rename fixes. For a lowercase rename, provide the corrected name directly — e.g. for a property named "State", use { name: "state", description: "Lowercase property name" }; for a value "Default", use { name: "default", description: "Lowercase property value" }. For an unrecognized name where no obvious correction exists, use { name: "", description: "Review property name against canonical list" }.
 ${SEVERITY_LEVELS}
 
 Use the component node ID as the variable_id field. Use "component-health" as the collection.
