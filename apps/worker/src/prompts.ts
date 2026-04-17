@@ -178,7 +178,9 @@ Canonical property names and their allowed values:
 - density: compact, comfortable, spacious
 - layout: stacked, inline, grid
 
-Component-specific descriptive names (e.g. "icon-position", "has-icon") are acceptable — do not flag them.
+Component-specific names that are lowercase kebab-case or lowercase single words and clearly describe a component property (e.g. "icon-position", "has-icon", "truncated") are acceptable — do not flag them. Only flag unrecognized names that are vague, non-descriptive, or violate format rules.
+
+Multi-word property names must use kebab-case (e.g. "icon-position"). snake_case (e.g. "icon_position") and camelCase (e.g. "iconPosition") are not acceptable.
 
 Errors (level: "error"):
 - Default Figma names: any property named "Property 1", "Property 2", "Property N" etc.
@@ -191,15 +193,17 @@ Errors (level: "error"):
 - A "viewport" property whose options include non-t-shirt-size values such as "mobile", "desktop", "tablet", "phone", "widescreen"
 
 Warnings (level: "warning"):
-- An unrecognized property name that is not obviously bad and not in the canonical list (it may be intentional, but deviates from convention)
+- An unrecognized property name that does not meet the component-specific exemption above and is not in the canonical list (it may be intentional, but deviates from convention)
 - For canonical property names state, viewport, size, shape, orientation, alignment, density, layout: a value not in the allowed list above — use rule label "Unexpected value for [property]" (do NOT apply this rule to variant or theme)
 
 Notes (level: "note"):
 - Property name or value with an initial capital only (single word, first letter uppercase) — e.g. "Default", "Hover", "Primary" — suggest the lowercase equivalent
 - Values that could be more conventional, e.g. "on"/"off" when "enabled"/"disabled" or "true"/"false" would be clearer
 
+Precedence: if a property name matches an error rule, report only the error — do not also emit the unrecognized-name warning for the same name.
+
 For each violation use rule labels such as: "Default property name", "Uppercase in property name", "Uppercase in property value", "Spaces in property name", "Spaces in property value", "Use theme not mode", "Generic property name", "Wrong viewport values", "Unrecognized property name", "Unexpected value for [property]", "Unconventional property values", "Consider lowercase".
-The options array should suggest the corrected property name or value; use an empty string for non-rename fixes. For a lowercase rename, provide the corrected name directly — e.g. for a property named "State", use `{ "name": "state", "description": "Lowercase property name" }`; for a value "Default", use `{ "name": "default", "description": "Lowercase property value" }`.
+The options array should suggest the corrected property name or value; use an empty string for non-rename fixes. For a lowercase rename, provide the corrected name directly — e.g. for a property named "State", use `{ "name": "state", "description": "Lowercase property name" }`; for a value "Default", use `{ "name": "default", "description": "Lowercase property value" }`. For an unrecognized name where no obvious correction exists, use `{ "name": "", "description": "Review property name against canonical list" }`.
 ${SEVERITY_LEVELS}
 
 Use the component node ID as the variable_id field. Use "component-health" as the collection.
