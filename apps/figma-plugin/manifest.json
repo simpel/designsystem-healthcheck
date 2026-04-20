@@ -1,9 +1,11 @@
 {
-  "name": "Designsystem healthcheck",
+  "name": "Designsystem Steward",
   "id": "1626492755115963696",
   "api": "1.0.0",
   "main": "dist/code.js",
-  "permissions": ["currentuser"],
+  "permissions": [
+    "currentuser"
+  ],
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",

@@ -725,6 +725,8 @@ figma.ui.onmessage = async (msg: {
   variableIds?: string[];
   variableId?: string;
   customPrompts?: Record<string, string>;
+  key?: string;
+  value?: string;
 }) => {
   if (msg.type === "rename-variable" && msg.id && msg.newName) {
     try {
@@ -975,6 +977,15 @@ figma.ui.onmessage = async (msg: {
     let prompts: Record<string, string> = {};
     try { prompts = raw ? JSON.parse(raw) : {}; } catch (_) {}
     figma.ui.postMessage({ type: "custom-prompts", data: prompts });
+  }
+
+  if (msg.type === "get-plugin-data" && msg.key) {
+    const val = figma.root.getPluginData(msg.key) || "[]";
+    figma.ui.postMessage({ type: "plugin-data", key: msg.key, value: val });
+  }
+
+  if (msg.type === "set-plugin-data" && msg.key) {
+    figma.root.setPluginData(msg.key, msg.value ?? "");
   }
 };
 

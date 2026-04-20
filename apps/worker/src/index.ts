@@ -15,7 +15,6 @@ import {
 } from "./prompts";
 
 interface Env {
-  ANTHROPIC_API_KEY: string;
   CF_AIG_TOKEN: string;
   CF_ACCOUNT_ID: string;
   CF_GATEWAY_ID: string;
@@ -105,10 +104,6 @@ interface AuditRequestBody {
   systemPrompt?: string;
 }
 
-function getGatewayUrl(env: Env): string {
-  return `https://gateway.ai.cloudflare.com/v1/${env.CF_ACCOUNT_ID}/${env.CF_GATEWAY_ID}/anthropic/v1/messages`;
-}
-
 async function handleCollectionAudit(
   request: Request,
   env: Env,
@@ -138,11 +133,11 @@ async function handleCollectionAudit(
   }
 
   const { response, completion } = createStreamingProxy({
-    gatewayUrl: getGatewayUrl(env),
-    apiKey: env.ANTHROPIC_API_KEY,
+    accountId: env.CF_ACCOUNT_ID,
+    gateway: env.CF_GATEWAY_ID,
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
-    maxTokens: 8192,
+    maxOutputTokens: 8192,
     systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? systemPrompt,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
@@ -191,11 +186,11 @@ async function handleComponentHealth(
   const userContent = `Audit the following Figma components for health and completeness:\n\n${JSON.stringify(body.componentData)}`;
 
   const { response, completion } = createStreamingProxy({
-    gatewayUrl: getGatewayUrl(env),
-    apiKey: env.ANTHROPIC_API_KEY,
+    accountId: env.CF_ACCOUNT_ID,
+    gateway: env.CF_GATEWAY_ID,
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
-    maxTokens: 8192,
+    maxOutputTokens: 8192,
     systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? COMPONENT_HEALTH_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,
@@ -239,11 +234,11 @@ async function handleFix(request: Request, env: Env, ctx: ExecutionContext): Pro
   const userContent = `Analyze the following Figma file structure and suggest fixes to achieve the correct architecture (exactly 3 collections: primitives, themes, components):\n\n${JSON.stringify(body.collectionStructure)}`;
 
   const { response } = createStreamingProxy({
-    gatewayUrl: getGatewayUrl(env),
-    apiKey: env.ANTHROPIC_API_KEY,
+    accountId: env.CF_ACCOUNT_ID,
+    gateway: env.CF_GATEWAY_ID,
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? FIX_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: FIX_SCHEMA,
@@ -267,11 +262,11 @@ async function handleGeneric(request: Request, env: Env, ctx: ExecutionContext):
   const userContent = `Audit the following Figma variable data:\n\n${JSON.stringify(body.variableData)}`;
 
   const { response, completion } = createStreamingProxy({
-    gatewayUrl: getGatewayUrl(env),
-    apiKey: env.ANTHROPIC_API_KEY,
+    accountId: env.CF_ACCOUNT_ID,
+    gateway: env.CF_GATEWAY_ID,
     aigToken: env.CF_AIG_TOKEN,
     model: body.model || "claude-sonnet-4-5",
-    maxTokens: 8192,
+    maxOutputTokens: 8192,
     systemPrompt: sanitizeCustomPrompt(body.systemPrompt) ?? GENERIC_SYSTEM_PROMPT,
     userMessage: userContent,
     outputSchema: VIOLATIONS_SCHEMA,

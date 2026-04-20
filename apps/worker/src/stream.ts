@@ -1,12 +1,17 @@
+import { createAiGateway } from "ai-gateway-provider";
+import { createAnthropic } from "ai-gateway-provider/providers/anthropic";
+import { streamText, Output } from "ai";
+import { z } from "zod";
+
 interface StreamProxyOptions {
-  gatewayUrl: string;
-  apiKey: string;
+  accountId: string;
+  gateway: string;
   aigToken: string;
   model: string;
-  maxTokens: number;
+  maxOutputTokens: number;
   systemPrompt: string;
   userMessage: string;
-  outputSchema: unknown;
+  outputSchema: z.ZodType;
   corsHeaders: Record<string, string>;
 }
 
@@ -21,30 +26,15 @@ interface StreamResult {
 }
 
 export function createStreamingProxy(options: StreamProxyOptions): StreamResult {
-  const {
-    gatewayUrl,
-    apiKey,
-    aigToken,
-    model,
-    maxTokens,
-    systemPrompt,
-    userMessage,
-    outputSchema,
-    corsHeaders,
-  } = options;
+  const { accountId, gateway, aigToken, model, maxOutputTokens, systemPrompt, userMessage, outputSchema, corsHeaders } = options;
 
-  const body = JSON.stringify({
-    model,
-    max_tokens: maxTokens,
-    stream: true,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-    output_config: { format: outputSchema },
-  });
+  const aigateway = createAiGateway({ accountId, gateway, apiKey: aigToken });
+  const anthropic = createAnthropic();
+  const modelId = model.startsWith("anthropic/") ? model.slice("anthropic/".length) : model;
 
   console.log("[stream] REQUEST", JSON.stringify({
-    model,
-    max_tokens: maxTokens,
+    model: modelId,
+    max_tokens: maxOutputTokens,
     system_length: systemPrompt.length,
     user_message_length: userMessage.length,
     user_message_preview: userMessage.slice(0, 500),
@@ -59,62 +49,34 @@ export function createStreamingProxy(options: StreamProxyOptions): StreamResult 
 
   const readable = new ReadableStream({
     async start(controller) {
+      const enc = new TextEncoder();
+
       try {
-        const resp = await fetch(gatewayUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-            "anthropic-beta": "structured-outputs-2025-11-13",
-            "cf-aig-authorization": `Bearer ${aigToken}`,
-          },
-          body,
+        const result = streamText({
+          model: aigateway(anthropic(modelId)),
+          output: Output.object({ schema: outputSchema }),
+          system: systemPrompt,
+          prompt: userMessage,
+          maxOutputTokens,
         });
 
-        if (!resp.ok || !resp.body) {
-          const errText = await resp.text();
-          console.log("[stream] ERROR", resp.status, errText.slice(0, 500));
-          controller.enqueue(new TextEncoder().encode(`event: error\ndata: ${JSON.stringify({ status: resp.status, error: errText })}\n\n`));
-          controller.close();
-          rejectCompletion!(new Error(`Anthropic ${resp.status}: ${errText.slice(0, 200)}`));
-          return;
-        }
-
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder();
         let accumulatedText = "";
         let inputTokens = 0;
         let outputTokens = 0;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          // Forward raw SSE chunk to client
-          controller.enqueue(value);
-
-          // Parse SSE events from chunk to accumulate text
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
-            try {
-              const event = JSON.parse(data);
-              if (event.type === "content_block_delta" && event.delta?.text) {
-                accumulatedText += event.delta.text;
-              }
-              if (event.type === "message_delta" && event.usage) {
-                outputTokens = event.usage.output_tokens ?? outputTokens;
-              }
-              if (event.type === "message_start" && event.message?.usage) {
-                inputTokens = event.message.usage.input_tokens ?? inputTokens;
-              }
-            } catch {
-              // Not all lines are JSON — ignore
-            }
+        for await (const chunk of result.fullStream) {
+          if (chunk.type === "text-delta") {
+            accumulatedText += chunk.text;
+            const event = {
+              type: "content_block_delta",
+              delta: { type: "text_delta", text: chunk.text },
+            };
+            controller.enqueue(enc.encode(`data: ${JSON.stringify(event)}\n\n`));
+          } else if (chunk.type === "finish") {
+            inputTokens = chunk.totalUsage.inputTokens ?? 0;
+            outputTokens = chunk.totalUsage.outputTokens ?? 0;
+          } else if (chunk.type === "error") {
+            throw chunk.error instanceof Error ? chunk.error : new Error(String(chunk.error));
           }
         }
 

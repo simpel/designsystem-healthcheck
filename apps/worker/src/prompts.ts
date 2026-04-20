@@ -308,92 +308,46 @@ For each fix, provide:
 
 Order fixes logically — create collections before moving variables into them. Be specific about which variables should move where based on their names and types.`;
 
-// ─── JSON schemas ───────────────────────────────────────────────────
-export const VIOLATIONS_SCHEMA = {
-  type: "json_schema" as const,
-  schema: {
-    type: "object",
-    additionalProperties: false,
-    required: ["summary", "violations", "passed"],
-    properties: {
-      summary: {
-        type: "object",
-        additionalProperties: false,
-        required: ["total_variables", "total_violations"],
-        properties: {
-          total_variables: { type: "number" },
-          total_violations: { type: "number" },
-        },
-      },
-      violations: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["collection", "variable_id", "variable", "level", "rule", "explanation", "options"],
-          properties: {
-            collection: { type: "string" },
-            variable_id: { type: "string" },
-            variable: { type: "string" },
-            level: { type: "string", enum: ["error", "warning", "note"] },
-            rule: { type: "string" },
-            explanation: { type: "string" },
-            options: {
-              type: "array",
-              items: {
-                type: "object",
-                additionalProperties: false,
-                required: ["name", "description"],
-                properties: {
-                  name: { type: "string" },
-                  description: { type: "string" },
-                  action: { type: "string", enum: ["delete-variable"] },
-                },
-              },
-            },
-          },
-        },
-      },
-      passed: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["variable_id", "variable", "collection"],
-          properties: {
-            variable_id: { type: "string" },
-            variable: { type: "string" },
-            collection: { type: "string" },
-          },
-        },
-      },
-    },
-  },
-};
+// ─── Output schemas (zod) ───────────────────────────────────────────
+import { z } from "zod";
 
-export const FIX_SCHEMA = {
-  type: "json_schema" as const,
-  schema: {
-    type: "object",
-    additionalProperties: false,
-    required: ["fixes"],
-    properties: {
-      fixes: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["action", "description", "params"],
-          properties: {
-            action: { type: "string" },
-            description: { type: "string" },
-            params: {
-              type: "object",
-              additionalProperties: true,
-            },
-          },
-        },
-      },
-    },
-  },
-};
+const optionSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  action: z.enum(["delete-variable"]).optional(),
+});
+
+const violationSchema = z.object({
+  collection: z.string(),
+  variable_id: z.string(),
+  variable: z.string(),
+  level: z.enum(["error", "warning", "note"]),
+  rule: z.string(),
+  explanation: z.string(),
+  options: z.array(optionSchema),
+});
+
+const passedSchema = z.object({
+  variable_id: z.string(),
+  variable: z.string(),
+  collection: z.string(),
+});
+
+export const VIOLATIONS_SCHEMA = z.object({
+  summary: z.object({
+    total_variables: z.number(),
+    total_violations: z.number(),
+  }),
+  violations: z.array(violationSchema),
+  passed: z.array(passedSchema),
+});
+
+export const FIX_SCHEMA = z.object({
+  fixes: z.array(
+    z.object({
+      action: z.string(),
+      description: z.string(),
+      params: z.record(z.string(), z.unknown()),
+    }),
+  ),
+});
