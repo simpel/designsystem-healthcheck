@@ -76,6 +76,8 @@ card-gap (no clear layer or hierarchy)</div>
   var unboundStyles = [];
   var apiToken = null;
   var customPrompts = {};
+  var dismissedFindings = new Set();
+  var currentResults = null;
 
   var DEFAULT_PROMPTS = {
     "primitives": "You are a Figma variable auditor for the PRIMITIVES collection.\n\nGolden rule: a primitive name must never imply how, where, or why a value is used. If you can tell from the name how or where something will be used, it is a violation.\n\nCanonical naming framework:\n- Most categories are flat: category/scale (e.g. spacing/4, radius/sm, font-size/md)\n- Color is the exception \u2014 it has multiple families (hues), so it uses three segments: color/family/scale (e.g. color/blue/500, color/gray/100)\n- No other category should use a family segment; spacing/padding/4 or font-size/body/md are violations\n\nStructure: two or three lowercase segments separated by \"/\".\n- Two segments: category/scale \u2014 required for all non-color categories\n- Three segments: category/family/scale \u2014 required for color, invalid for all other categories\n\nCategory: must describe a raw value type (color, spacing, radius, font-size, opacity, shadow, border-width, line-height, font-weight). Flag any category that implies a role, component, or usage context. Categories like \"layout\" are borderline \u2014 layout/content-max describes a raw dimension value and is acceptable, but flag it as a warning so the team can decide.\n\nFamily (color only): must be a raw hue or material name (blue, red, green, gray, slate, zinc\u2026) \u2014 it describes what the color IS, not how it is used. Words that imply usage or role \u2014 \"brand\", \"danger\", \"primary\", \"button\", \"default\" \u2014 are violations. A family segment on any non-color category is also a violation.\n\nScale: must use one of these numeric conventions:\n- T-shirt sizes: xs, sm, md, lg, xl, 2xl, 3xl\u2026\n- Tailwind-style color steps: 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950\n- Direct numeric values for non-color primitives: 4, 13, 1.5\u2026\nDescriptive words like \"large\", \"heavy\", \"dark\", \"light\" are violations. Scale values must always be their own standalone segment \u2014 never hyphenated into an adjacent word. \"paragraph-lg\" or \"heading-sm\" as a single segment is always an error; the scale must be split into a separate segment (e.g. \"paragraph/lg\"). All scales within a category must be consistent \u2014 do not mix t-shirt sizes with numeric steps in the same category.\n\nAliasing: primitives must have raw hardcoded values. A primitive where aliasId is not null is a violation.\n\nConsistency: identify the dominant pattern across the collection and flag any variable that deviates from it in structure or naming style.\n\nUnused variables: you will receive a list of \"unreferenced\" primitive variable names \u2014 these are not aliased by any theme variable. Flag each as a warning with rule \"Unused variable\" and suggest removal.\n\nSeverity levels \u2014 every violation must have a \"level\" field:\n- \"error\": clear structural violations that break the architecture. Examples: aliasing in primitives, semantic/role names (brand, danger, primary), hardcoded values in themes, wrong alias target.\n- \"warning\": borderline issues that may be intentional but deviate from best practice. Examples: unusual but defensible category names (e.g. layout/content-max \u2014 describes a raw value but is less conventional), unused variables, inconsistency with the dominant pattern.\n- \"note\": minor style suggestions that are not wrong per se. Examples: minor casing inconsistencies, a valid name that could be slightly more descriptive, missing states that are optional for the component type.\n\nAlways include the variable's id field in each violation so it can be used to apply fixes programmatically.\n\nYou must also return a \"passed\" array listing every variable that has NO violations. Each entry needs only: variable_id, variable (the name), and collection (\"primitives\").\n\nEvery violation must have:\n- collection: \"primitives\"\n- variable_id: the variable's id string\n- variable: the full variable name\n- level: \"error\", \"warning\", or \"note\"\n- rule: short label\n- explanation: one specific sentence explaining exactly what is wrong and why\n- options: array of 1\u20133 fix options, best first. Each option has \"name\" (the exact corrected variable name, e.g. \"color/blue/500\" \u2014 empty string for non-rename fixes), \"description\" (short human-readable reason, e.g. \"Matches the existing blue scale\"), and optionally \"action\": set to \"delete-variable\" when the fix is to delete the variable. Multiple options when more than one valid name exists (e.g. \"color/blue/500\" vs \"color/navy/500\").",
@@ -104,6 +106,16 @@ card-gap (no clear layer or hierarchy)</div>
 
   function clearEl(el) { while (el.firstChild) el.removeChild(el.firstChild); }
 
+  function dismissKey(v) { return (v.variable_id || "") + "::" + (v.rule || ""); }
+
+  function loadDismissed() {
+    parent.postMessage({ pluginMessage: { type: "get-plugin-data", key: "dismissedFindings" } }, "*");
+  }
+
+  function saveDismissed() {
+    parent.postMessage({ pluginMessage: { type: "set-plugin-data", key: "dismissedFindings", value: JSON.stringify(Array.from(dismissedFindings)) } }, "*");
+  }
+
   // ─── Nav switching ──────────────────────────────────────────────
   var navBtns = nav.querySelectorAll("button");
   for (var i = 0; i < navBtns.length; i++) {
@@ -113,26 +125,36 @@ card-gap (no clear layer or hierarchy)</div>
       for (var j = 0; j < navBtns.length; j++) navBtns[j].classList.toggle("active", navBtns[j].getAttribute("data-nav") === target);
 
       if (target === "guide") {
-        // Save current audit content, show guide
-        auditMiddleContent = document.createDocumentFragment();
-        while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        // Save audit content only when leaving audit tab
+        if (activeNav === "audit") {
+          auditMiddleContent = document.createDocumentFragment();
+          while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        } else {
+          clearEl(slotMiddle);
+        }
         slotMiddle.appendChild(guideContent);
         guideContent.style.display = "";
+        slotBottom.style.display = "none";
       } else if (target === "settings") {
-        // Save current audit content, show settings
-        auditMiddleContent = document.createDocumentFragment();
-        while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        // Save audit content only when leaving audit tab
+        if (activeNav === "audit") {
+          auditMiddleContent = document.createDocumentFragment();
+          while (slotMiddle.firstChild) auditMiddleContent.appendChild(slotMiddle.firstChild);
+        } else {
+          clearEl(slotMiddle);
+        }
         showSettingsView();
+        slotBottom.style.display = "none";
       } else {
         // Restore audit content
-        guideContent.style.display = "none";
-        slotMiddle.appendChild(guideContent); // park it
         clearEl(slotMiddle);
         slotMiddle.appendChild(guideContent); // keep in DOM but hidden
+        guideContent.style.display = "none";
         if (auditMiddleContent) {
           slotMiddle.insertBefore(auditMiddleContent, guideContent);
           auditMiddleContent = null;
         }
+        slotBottom.style.display = "";
       }
       activeNav = target;
     });
@@ -397,6 +419,11 @@ card-gap (no clear layer or hierarchy)</div>
 
     if (msg.type === "custom-prompts") {
       customPrompts = msg.data || {};
+    }
+
+    if (msg.type === "plugin-data" && msg.key === "dismissedFindings") {
+      try { dismissedFindings = new Set(JSON.parse(msg.value || "[]")); } catch (_) {}
+      if (currentResults) renderResults(currentResults);
     }
 
     if (msg.type === "rename-success") {
@@ -1239,16 +1266,25 @@ card-gap (no clear layer or hierarchy)</div>
 
   // ─── Render results ───────────────────────────────────────────────
   function renderResults(result) {
+    currentResults = result;
+
     var totalVars = result.summary.total_variables;
     var totalViolations = result.summary.total_violations;
     var passed = result.passed || [];
 
-    // Group violations by level
+    // Group violations by level, split active vs dismissed
     var byLevel = { error: [], warning: [], note: [] };
+    var byLevelDismissed = { error: [], warning: [], note: [] };
     for (var v = 0; v < result.violations.length; v++) {
-      var level = result.violations[v].level || "error";
+      var viol = result.violations[v];
+      var level = viol.level || "error";
       if (!byLevel[level]) byLevel[level] = [];
-      byLevel[level].push(result.violations[v]);
+      if (!byLevelDismissed[level]) byLevelDismissed[level] = [];
+      if (dismissedFindings.has(dismissKey(viol))) {
+        byLevelDismissed[level].push(viol);
+      } else {
+        byLevel[level].push(viol);
+      }
     }
 
     var errorCount = byLevel.error.length;
@@ -1276,28 +1312,30 @@ card-gap (no clear layer or hierarchy)</div>
     tabBar.className = "tab-bar";
 
     var tabs = [
-      { key: "broken", label: "File Health", count: brokenCount },
-      { key: "error", label: "Errors", count: errorCount },
-      { key: "warning", label: "Warnings", count: warningCount },
-      { key: "note", label: "Notes", count: noteCount },
-      { key: "passed", label: "Passed", count: passedCount },
+      { key: "broken",   label: "File Health", count: brokenCount,   dismissedCount: 0 },
+      { key: "error",    label: "Errors",       count: errorCount,    dismissedCount: byLevelDismissed.error.length },
+      { key: "warning",  label: "Warnings",     count: warningCount,  dismissedCount: byLevelDismissed.warning.length },
+      { key: "note",     label: "Notes",        count: noteCount,     dismissedCount: byLevelDismissed.note.length },
+      { key: "passed",   label: "Passed",       count: passedCount,   dismissedCount: 0 },
     ];
 
     var panels = {};
 
     for (var t = 0; t < tabs.length; t++) {
       (function (tab) {
-        if (tab.count === 0) return;
+        if (tab.count === 0 && tab.dismissedCount === 0) return;
 
         var btn = document.createElement("button");
         btn.className = "tab-btn";
         btn.setAttribute("data-tab", tab.key);
         btn.textContent = tab.label;
 
-        var badge = document.createElement("span");
-        badge.className = "tab-count";
-        badge.textContent = String(tab.count);
-        btn.appendChild(badge);
+        if (tab.count > 0) {
+          var badge = document.createElement("span");
+          badge.className = "tab-count";
+          badge.textContent = String(tab.count);
+          btn.appendChild(badge);
+        }
 
         btn.addEventListener("click", function () {
           var allBtns = tabBar.querySelectorAll(".tab-btn");
@@ -1330,7 +1368,7 @@ card-gap (no clear layer or hierarchy)</div>
     var levelKeys = ["error", "warning", "note"];
     for (var l = 0; l < levelKeys.length; l++) {
       if (!panels[levelKeys[l]]) continue;
-      renderViolationsInPanel(panels[levelKeys[l]], byLevel[levelKeys[l]], levelKeys[l]);
+      renderViolationsInPanel(panels[levelKeys[l]], byLevel[levelKeys[l]], byLevelDismissed[levelKeys[l]], levelKeys[l]);
       middle.appendChild(panels[levelKeys[l]]);
     }
 
@@ -1350,7 +1388,7 @@ card-gap (no clear layer or hierarchy)</div>
     if (firstBtn) firstBtn.click();
   }
 
-  function renderViolationsInPanel(panel, violations, level) {
+  function renderViolationsInPanel(panel, violations, dismissedViolations, level) {
     // Group by collection
     var groups = {};
     for (var v = 0; v < violations.length; v++) {
@@ -1373,6 +1411,55 @@ card-gap (no clear layer or hierarchy)</div>
         renderSectionInPanel(panel, groupKeys[g].toUpperCase(), groups[groupKeys[g]], level);
       }
     }
+
+    if (dismissedViolations && dismissedViolations.length > 0) {
+      renderDismissedSection(panel, dismissedViolations);
+    }
+  }
+
+  function renderDismissedSection(panel, violations) {
+    var details = document.createElement("details");
+    details.className = "dismissed-section";
+
+    var summary = document.createElement("summary");
+    summary.textContent = "Dismissed (" + violations.length + ")";
+    details.appendChild(summary);
+
+    for (var i = 0; i < violations.length; i++) {
+      (function (v) {
+        var row = document.createElement("div");
+        row.className = "dismissed-row";
+
+        var info = document.createElement("div");
+        info.className = "dismissed-info";
+
+        var nameEl = document.createElement("span");
+        nameEl.className = "dismissed-name";
+        nameEl.textContent = v.variable;
+        info.appendChild(nameEl);
+
+        var ruleEl = document.createElement("span");
+        ruleEl.className = "dismissed-rule-label";
+        ruleEl.textContent = v.rule;
+        info.appendChild(ruleEl);
+
+        row.appendChild(info);
+
+        var restoreBtn = document.createElement("button");
+        restoreBtn.className = "restore-btn";
+        restoreBtn.textContent = "Restore";
+        restoreBtn.addEventListener("click", function () {
+          dismissedFindings.delete(dismissKey(v));
+          saveDismissed();
+          renderResults(currentResults);
+        });
+        row.appendChild(restoreBtn);
+
+        details.appendChild(row);
+      })(violations[i]);
+    }
+
+    panel.appendChild(details);
   }
 
   function renderPassedPanel(panel, passed) {
@@ -1544,6 +1631,21 @@ card-gap (no clear layer or hierarchy)</div>
       nameEl.textContent = v.variable;
 
       topLine.appendChild(nameEl);
+
+      if (v.variable_id && v.rule) {
+        (function (violation) {
+          var dismissBtn = document.createElement("button");
+          dismissBtn.className = "dismiss-btn";
+          dismissBtn.textContent = "Dismiss";
+          dismissBtn.addEventListener("click", function () {
+            dismissedFindings.add(dismissKey(violation));
+            saveDismissed();
+            renderResults(currentResults);
+          });
+          topLine.appendChild(dismissBtn);
+        })(v);
+      }
+
       row.appendChild(topLine);
 
       var ruleEl = document.createElement("div");
@@ -1583,28 +1685,28 @@ card-gap (no clear layer or hierarchy)</div>
             optDesc.textContent = opt.description;
             optRow.appendChild(optDesc);
 
-            var optBtn = document.createElement("button");
-            optBtn.className = "fix-btn";
-
             if (violation.variable_id && opt.name) {
+              var optBtn = document.createElement("button");
+              optBtn.className = "fix-btn";
               optBtn.textContent = "Fix";
               optBtn.addEventListener("click", function () {
                 parent.postMessage({ pluginMessage: { type: "rename-variable", id: violation.variable_id, newName: opt.name } }, "*");
                 optBtn.textContent = "Fixing\u2026";
                 optBtn.disabled = true;
               });
+              optRow.appendChild(optBtn);
             } else if (opt.action === "delete-variable" && violation.variable_id) {
+              var optBtn = document.createElement("button");
+              optBtn.className = "fix-btn";
               optBtn.textContent = "Delete";
               optBtn.addEventListener("click", function () {
                 parent.postMessage({ pluginMessage: { type: "delete-variable", variableId: violation.variable_id } }, "*");
                 optBtn.textContent = "Deleting\u2026";
                 optBtn.disabled = true;
               });
-            } else {
-              optBtn.remove();
+              optRow.appendChild(optBtn);
             }
 
-            optRow.appendChild(optBtn);
             optionsArea.appendChild(optRow);
           })(options[j], v);
         }
@@ -1619,5 +1721,6 @@ card-gap (no clear layer or hierarchy)</div>
     panel.appendChild(item);
   }
 
+  loadDismissed();
   parent.postMessage({ pluginMessage: { type: "ui-ready" } }, "*");
 </script>
